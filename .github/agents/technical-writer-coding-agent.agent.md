@@ -87,7 +87,7 @@ Before starting, familiarize yourself with:
 - [README.md](../../README.md) - Main project documentation
 - [docs/architecture.md](../../docs/architecture.md) - Project specification and architectural design
 - [docs/conventions.md](../../docs/conventions.md) - Coding standards
-- [docs/features.md](../../docs/features-template.md) - Feature descriptions
+- [docs/features.md](../../docs/features.md) - Feature index (append a row for each new feature)
 - [docs/agents.md](../../docs/agents.md) - Workflow overview and artifact formats
 - [.github/gh-cli-instructions.md](../gh-cli-instructions.md) - GitHub CLI fallback guidance (only if a chat tool is missing)
 - Existing documentation in `docs/`
