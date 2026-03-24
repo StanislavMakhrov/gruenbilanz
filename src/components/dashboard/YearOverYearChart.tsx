@@ -101,7 +101,7 @@ export default function YearOverYearChart({ yearData }: YearOverYearChartProps) 
             tick={{ fontSize: 11, fill: '#6b7280' }}
             unit=" t"
           />
-          {/* @ts-expect-error recharts tooltip props are typed loosely */}
+          {/* Recharts types for custom tooltip content are now accurate — no suppression needed */}
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Bar dataKey="Scope 1" fill="#15803d" radius={[4, 4, 0, 0]} />

@@ -30,8 +30,9 @@ export interface CsvImportResult {
  * @param file - The uploaded CSV or XLSX file
  */
 export async function importFromCsv(file: File | Buffer): Promise<CsvImportResult> {
-  // Validate file size
-  const size = file instanceof Buffer ? file.length : file.size;
+  // Use Buffer.isBuffer() for proper TypeScript narrowing — instanceof Buffer does not narrow
+  // generics (Buffer<ArrayBufferLike>) correctly in stricter TS versions.
+  const size = Buffer.isBuffer(file) ? file.length : file.size;
   if (size > MAX_FILE_SIZE_BYTES) {
     throw new Error('CSV-Import fehlgeschlagen: Datei zu groß (max. 10 MB)');
   }

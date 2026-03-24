@@ -49,8 +49,9 @@ export async function extractFromFile(
   file: File | Buffer,
   category: string,
 ): Promise<OcrResult> {
-  // Validate file size
-  const size = file instanceof Buffer ? file.length : file.size;
+  // Use Buffer.isBuffer() for proper TypeScript narrowing — instanceof Buffer does not narrow
+  // generics (Buffer<ArrayBufferLike>) correctly in stricter TS versions.
+  const size = Buffer.isBuffer(file) ? file.length : file.size;
   if (size > MAX_FILE_SIZE_BYTES) {
     return { value: null, unit: '', confidence: 0, error: 'OCR fehlgeschlagen: Datei zu groß (max. 10 MB)' };
   }

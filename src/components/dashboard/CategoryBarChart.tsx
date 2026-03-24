@@ -90,7 +90,7 @@ export default function CategoryBarChart({ data }: CategoryBarChartProps) {
             width={140}
             tick={{ fontSize: 11, fill: '#374151' }}
           />
-          {/* @ts-expect-error recharts tooltip props are typed loosely */}
+          {/* Recharts types for custom tooltip content are now accurate — no suppression needed */}
           <Tooltip content={<CustomTooltip />} />
           <Bar dataKey="co2eKg" radius={[0, 4, 4, 0]}>
             {chartData.map((entry) => (

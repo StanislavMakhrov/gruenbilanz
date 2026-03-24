@@ -68,7 +68,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     const filename = `GruenBilanz_${type}_${year.year}.pdf`;
-    return new NextResponse(pdfBuffer, {
+    // Convert Buffer to Uint8Array — Uint8Array is a valid BodyInit, Buffer (a subclass) is not
+    // recognized as such in TypeScript's DOM lib types, so explicit conversion is required.
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}"`,

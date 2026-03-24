@@ -25,7 +25,9 @@ export async function GET(
     return NextResponse.json({ error: 'Dokument nicht gefunden.' }, { status: 404 });
   }
 
-  return new NextResponse(doc.content, {
+  // Convert Prisma Bytes (Buffer) to Uint8Array — Buffer is not a valid BodyInit in TypeScript
+  // but Uint8Array is, and Buffer is a subclass of Uint8Array so this is safe at runtime.
+  return new NextResponse(new Uint8Array(doc.content), {
     headers: {
       'Content-Type': doc.mimeType,
       'Content-Disposition': `attachment; filename="${encodeURIComponent(doc.filename)}"`,

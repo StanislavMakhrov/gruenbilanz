@@ -79,7 +79,7 @@ export default function ScopeDonut({ data }: ScopeDonutProps) {
               <Cell key={entry.scope} fill={SCOPE_COLORS[entry.scope] ?? '#6b7280'} />
             ))}
           </Pie>
-          {/* @ts-expect-error recharts tooltip props are typed loosely */}
+          {/* Recharts types for custom tooltip content are now accurate — no suppression needed */}
           <Tooltip content={<CustomTooltip />} />
           <Legend
             formatter={(value: string) => (
