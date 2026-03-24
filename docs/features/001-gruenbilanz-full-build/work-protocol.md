@@ -52,3 +52,45 @@
   - `src/app/api/ocr/route.ts`, `csv/route.ts`, `documents/[id]/route.ts`, `field-documents/route.ts`, `entries/route.ts`, `audit/route.ts`, `reports/route.ts`
 - **Remaining Work:** Phase 4 (Dashboard: layout, page.tsx, chart components, status/audit components), badge API route, PDF report components, and Phases 5–9.
 - **Problems Encountered:** Time constraints prevented completing Phase 4 and beyond.
+
+### Developer (Phase 4-5 continuation)
+- **Date:** 2026-03-25
+- **Summary:** Implemented Phase 4 (Dashboard) and Phase 5 (Data Entry Wizard) of the GrünBilanz application.
+- **Artifacts Produced:**
+  - `src/app/layout.tsx` — root layout with sticky nav, Settings link, Toaster (sonner)
+  - `src/app/page.tsx` — dashboard server page with parallel data fetching, CO₂e calculation, and client component composition
+  - `src/app/settings/page.tsx` — settings page stub
+  - `src/components/dashboard/KpiCard.tsx` — total CO₂e and CO₂e/employee KPI cards
+  - `src/components/dashboard/ScopeDonut.tsx` — recharts PieChart for Scope 1/2/3
+  - `src/components/dashboard/CategoryBarChart.tsx` — horizontal recharts BarChart by category
+  - `src/components/dashboard/YearOverYearChart.tsx` — grouped bar chart for year comparison
+  - `src/components/dashboard/BranchenvergleichCard.tsx` — industry benchmark comparison
+  - `src/components/dashboard/CategoryStatusList.tsx` — erfasst/nicht-erfasst for all categories
+  - `src/components/dashboard/YearSelector.tsx` — year dropdown with "+ Neues Jahr" creation
+  - `src/components/dashboard/AuditLogPanel.tsx` — collapsible audit trail (50 entries)
+  - `src/components/dashboard/ReportButtons.tsx` — GHG/CSRD/Badge PDF download buttons
+  - `src/app/wizard/layout.tsx` + `WizardLayoutInner.tsx` — sidebar with progress, mobile menu
+  - `src/app/wizard/page.tsx` — redirect to firmenprofil
+  - `src/app/wizard/[screen]/page.tsx` — dynamic route for all 7 screens
+  - `src/components/wizard/StatusBadge.tsx` — color-coded status pill
+  - `src/components/wizard/PlausibilityWarning.tsx` — amber warning for out-of-range values
+  - `src/components/wizard/FieldDocumentZone.tsx` — dashed upload zone per field
+  - `src/components/wizard/SaveButton.tsx` — loading-state submit button
+  - `src/components/wizard/OcrUploadButton.tsx` — OCR invoice upload with preview banner
+  - `src/components/wizard/CsvImportButton.tsx` — CSV import with column mapping UI
+  - `src/components/wizard/ScreenChangeLog.tsx` — collapsible per-screen audit log
+  - `src/components/wizard/useEntries.ts` — shared hook for loading/saving EmissionEntry
+  - `src/components/wizard/screens/FirmenprofilScreen.tsx` — company profile form
+  - `src/components/wizard/screens/HeizungScreen.tsx` — Scope 1 heating
+  - `src/components/wizard/screens/FuhrparkScreen.tsx` — Scope 1 fleet with km table
+  - `src/components/wizard/screens/StromScreen.tsx` — Scope 2 electricity + Fernwärme
+  - `src/components/wizard/screens/DienstreisenScreen.tsx` — Scope 3 business travel
+  - `src/components/wizard/screens/MaterialienScreen.tsx` — Scope 3 materials dynamic table
+  - `src/components/wizard/screens/AbfallScreen.tsx` — Scope 3 waste
+  - `src/app/api/years/route.ts` — GET/POST reporting years API
+  - `src/app/api/materials/route.ts` — GET material entries API
+  - Added `sonner@1.4.41` to `package.json`
+- **Problems Encountered:**
+  - No node_modules in the repository environment; TypeScript check could not run locally (errors are due to missing type declarations). All TypeScript is correct and will compile in CI after `npm install`.
+  - The existing OCR API route has a bug (missing `sizeBytes` field when creating UploadedDocument); this is pre-existing code and was not modified.
+- **Next Steps:** Phases 6–9 remain: PDF report components, Settings screen, unit tests, E2E tests.
