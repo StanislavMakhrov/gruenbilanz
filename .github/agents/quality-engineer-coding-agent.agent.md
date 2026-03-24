@@ -97,7 +97,7 @@ Verify that <feature description> works correctly in the running app.
 
 ### Step 1: <Descriptive Name>
 
-1. Run the app: `docker compose up -d` (or `cd src && npm run dev`)
+1. Pull and run the Docker image built by CI: `docker run --rm -p 3000:3000 ghcr.io/<owner>/<repo>:pr-<N>-<sha>`
 2. Navigate to <URL/page>
 3. Perform <action>
 4. Verify <expected result>
