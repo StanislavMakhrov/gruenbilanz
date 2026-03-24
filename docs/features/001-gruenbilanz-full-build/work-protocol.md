@@ -31,3 +31,10 @@
   - `docs/features/001-gruenbilanz-full-build/test-plan.md`
   - `docs/features/001-gruenbilanz-full-build/uat-test-plan.md`
 - **Problems Encountered:** None. No existing test files were present (e2e-tests/ contains only `.gitkeep`), so all test case specifications are greenfield and follow conventions from `docs/testing-strategy.md`.
+
+### Task Planner
+- **Date:** 2026-03-24
+- **Summary:** Read all prior artifacts (`specification.md`, `architecture.md`, `test-plan.md`, `docs/architecture.md` arc42 v1.1, `docs/conventions.md`) in full. Created a comprehensive `tasks.md` covering 9 implementation phases with 32 tasks (IDs TASK-1.1 through TASK-9.5). Each task includes description, priority (P1/P2/P3), concrete file list, measurable acceptance criteria, and explicit dependency references. The task breakdown follows the implementation order recommended in `architecture.md §12` (infrastructure → lib modules → server actions → dashboard → wizard → reports → settings → unit tests → E2E tests). All 76 source files from the architecture component breakdown are mapped to specific tasks. Unit test coverage requirements (≥ 80% for `emissions.ts` and `factors.ts`) and all non-functional requirements (German UI, mobile-first, WCAG 2.1 AA, TypeScript strict, file size limits) are captured as a cross-cutting concern section.
+- **Artifacts Produced:**
+  - `docs/features/001-gruenbilanz-full-build/tasks.md` (32 tasks across 9 phases, 1335 lines)
+- **Problems Encountered:** None. Specification and architecture documents were fully detailed with no ambiguity. All ADRs (ADR-001 through ADR-006) are finalised; no open questions remain.
