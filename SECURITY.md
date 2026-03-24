@@ -1,0 +1,105 @@
+# Security Policy
+
+## Supported Versions
+
+We release patches for security vulnerabilities in the following versions:
+
+| Version | Supported          |
+| ------- | ------------------ |
+| Latest  | :white_check_mark: |
+| < Latest | :x:               |
+
+**Note:** As a small, actively maintained project, we only support the latest released version. Security fixes are applied to the `main` branch and released immediately.
+
+## Reporting a Vulnerability
+
+**Please do not report security vulnerabilities through public GitHub issues.**
+
+Instead, please report them privately using one of these methods:
+
+### Preferred: GitHub Security Advisories
+
+1. Go to https://github.com/<owner>/<project-name>/security/advisories/new
+2. Click "Report a vulnerability"
+3. Fill in the details of the vulnerability
+4. Submit the advisory
+
+This keeps the vulnerability private until we've addressed it.
+
+### Alternative: Email
+
+Send an email to: **project-email@example.com**
+
+Please include:
+- Description of the vulnerability
+- Steps to reproduce
+- Potential impact
+- Any suggested fixes (if you have them)
+
+## What to Expect
+
+As a hobby project maintained in my free time, I cannot guarantee specific response times. However, I take security seriously and will:
+
+- Respond as soon as I'm able to review the report
+- Prioritize security fixes when possible
+- Work with you on coordinated disclosure timing
+- Credit you in the security advisory (if desired)
+
+Please be patient - response times may vary depending on other commitments.
+
+## Security Considerations for <project-name>
+
+### In Scope
+
+Security issues related to:
+- **Input validation**: Malformed JSON causing crashes or unexpected behavior
+- **Output injection**: Markdown/HTML injection in generated reports
+- **Sensitive data exposure**: Unintended exposure of sensitive values
+- **Dependencies**: Known vulnerabilities in third-party packages
+- **Docker image**: Vulnerabilities in the base image or build process
+
+### Out of Scope
+
+The following are generally **not** considered security vulnerabilities:
+- Issues in third-party services or infrastructure configurations used with the app (report to the respective vendor)
+- DoS through extremely large plan files (resource exhaustion is expected)
+- Issues requiring physical access to the system running <project-name>
+
+### Best Practices for Users
+
+When using <project-name>:
+- ✅ Use `--show-sensitive` only in secure environments
+- ✅ Review generated reports before sharing publicly
+- ✅ Keep <project-name> updated to the latest version
+- ✅ Use the official Docker image from GitHub Container Registry (GHCR)
+- ✅ Validate plan files come from trusted sources
+
+## Security Update Process
+
+When a security vulnerability is confirmed:
+
+1. **Patch Development**: We develop and test a fix
+2. **Advisory Creation**: We create a GitHub Security Advisory
+3. **Release**: We release a new version with the fix
+4. **Notification**: The advisory is published with details
+5. **Credit**: We credit the reporter (unless they prefer to remain anonymous)
+
+## Disclosure Policy
+
+We follow **coordinated disclosure**:
+- We'll work with you to understand and fix the issue
+- We'll agree on a disclosure timeline (typically 90 days)
+- We'll credit you in the security advisory (if desired)
+- We ask that you don't publicly disclose until we've released a fix
+
+## Past Advisories
+
+- [Sensitive Attribute Disclosure in Array/Nested Structures (fixed in v1.23.1, 8.5/10)](https://github.com/<owner>/<project-name>/security/advisories/<advisory-id>)
+
+## Questions?
+
+If you have questions about this security policy, feel free to:
+- Open a [GitHub Discussion](https://github.com/<owner>/<project-name>/discussions)
+- Email: project-email@example.com
+
+Thank you for helping keep <project-name> and its users safe!
