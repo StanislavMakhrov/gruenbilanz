@@ -226,14 +226,17 @@ flowchart TB
 	%% Row 17: Release Manager
 	RM["<b>Release Manager</b>"]
 
-	%% Row 16: Release Artifacts
+	%% Release Artifacts
 	REL["🚀 Release Notes"]
-	PR["🔀 Pull Request"]
+	PR["🔀 Pull Request<br/>(draft → ready-for-review<br/>via mark-ready)"]
+	CI["⚙️ PR Validation CI<br/>Docker build + E2E tests"]
 
-	%% Row 17: Retrospective
+	%% Maintainer touchpoints
+	UAT_REVIEW(["👤 <b>Maintainer</b><br/>PASS / FAIL comment"])
+	MERGE(["👤 <b>Maintainer</b><br/>Approve &amp; Merge PR"])
+
+	%% Retrospective
 	RETRO_AGENT["<b>Retrospective</b>"]
-
-	%% Row 18: Retro Report
 	RETRO["📝 Retrospective Report"]
 
 	%% Connections - Main Flow
@@ -265,21 +268,26 @@ flowchart TB
 	CRR -- "Approved (no UAT)" --> RM
 
 	UAT_AGENT --> UAT
-	UAT -. "Rendering Issues" .-> DEV
-	UAT -- "Approved" --> RM
+	UAT -. "E2E / UAT Failures" .-> DEV
+	UAT --> UAT_REVIEW
+	UAT_REVIEW -. "FAIL" .-> DEV
+	UAT_REVIEW -- "PASS" --> RM
 
 	RM --> REL
 	RM --> PR
-	RM --> RETRO_AGENT
+	PR --> CI
+	CI -. "CI Failures" .-> DEV
+	CI -- "CI ✅" --> MERGE
+	MERGE --> RETRO_AGENT
 
 	RETRO_AGENT --> RETRO --> WE
 
 	%% Styling
-	class HUMAN human;
+	class HUMAN,UAT_REVIEW,MERGE human;
 	class WO orchestrator;
 	class IA_AGENT,RE,AR,TP_AGENT,QE,DEV,TW,CR,UAT_AGENT,RM,RETRO_AGENT agent;
 	class WE metaagent;
-	class IA,FS,US,ADR,TP,CODE,DOCS,CRR,REL,PR,WD,UAT,RETRO artifact;
+	class IA,FS,US,ADR,TP,CODE,DOCS,CRR,REL,PR,WD,UAT,RETRO,CI artifact;
 ```
 
 _Agents produce and consume artifacts. Arrows show artifact creation and consumption. Communication for feedback/questions between agents (regarding consumed artifacts) is always possible, but intentionally omitted from the diagram for clarity._
@@ -294,8 +302,10 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 6. **Developer** implements features/fixes and tests.
 7. **Technical Writer** updates all relevant documentation (markdown files in the repository).
 8. **Code Reviewer** reviews and approves the work. Hands off to UAT Tester for user-facing features, or directly to Release Manager for internal changes.
-9. **UAT Tester** writes automated **E2E tests** for user-facing scenarios/user stories (committed to `e2e-tests/<feature-slug>/e2e.spec.ts` at repo root) that cover all scenarios from the test plan. E2E tests run in CI via the `e2e-tests` job. Also posts optional manual verification instructions for the Maintainer as an additional check. Waits for Maintainer PASS/FAIL on the manual check.
-10. **Release Manager** prepares, coordinates, and executes the release.
+9. **UAT Tester** writes automated **E2E tests** for user-facing scenarios/user stories (committed to `e2e-tests/<feature-slug>/e2e.spec.ts` at repo root) that cover all scenarios from the test plan. E2E tests run in CI via the `e2e-tests` job — the Orchestrator monitors CI via `watch-pr-validation` and routes any E2E failures back to Developer automatically. Also posts a PR comment with optional manual verification instructions (checklist + `docker run` command + screenshots + demo login credentials) for the Maintainer as an additional check. **Waits for Maintainer to reply `PASS` or `FAIL: <page>, <expected>, <actual>` in the PR comment** before writing the UAT report. Any failure (broken use case, wrong data, UI defect, etc.) is handed back to Developer; on PASS, hands off to Release Manager.
+   - 👤 **Maintainer action:** Reply `PASS` or `FAIL: ...` in the PR comment.
+10. **Release Manager** generates release notes, then calls `scripts/pr-github.sh mark-ready` to convert the `copilot/*` draft PR → ready-for-review. This triggers the **PR Validation** CI pipeline automatically: first a Docker image is built and pushed to GHCR (`ghcr.io/…:pr-N-sha`), then E2E tests run against that image. The Orchestrator monitors CI via `watch-pr-validation` and routes any CI failures back to Developer. Once CI is green, Release Manager notifies the Maintainer the PR is ready.
+    - 👤 **Maintainer action:** Approve and merge the PR in the GitHub UI.
 
 **Meta-Agent:**
 - **Workflow Engineer** improves and maintains the agent workflow itself (operates outside the normal feature flow).
@@ -376,14 +386,20 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
   3. A UAT report at `docs/features/NNN-<feature-slug>/uat-report.md` after Maintainer confirms PASS/FAIL.
 - **E2E test location:** `e2e-tests/<feature-slug>/e2e.spec.ts` (repo root, not inside `src/`). Uses shared config from `e2e-tests/playwright.config.ts`.
 - **BLOCKER:** If the feature has no user-facing UI changes (e.g. pure background job or API-only), the agent must ask the Maintainer before proceeding.
-- **Definition of Done:** All user-facing scenarios from the test plan are covered by Playwright tests, the CI `e2e-tests` job passes, and the Maintainer has replied with explicit PASS/FAIL on the manual check.
+- **Maintainer touchpoint:** After posting the PR comment, the agent waits for the Maintainer to reply with `PASS` or `FAIL: <page>, <expected>, <actual>` (screenshots welcome). Any failure (broken use case, wrong data, UI defect, etc.) is handed back to Developer. After fixing, UAT Tester re-validates. Note: automated E2E CI failures are monitored by the Orchestrator via `watch-pr-validation` — they are routed back to Developer independently of the manual check.
+- **Definition of Done:** All user-facing scenarios from the test plan are covered by Playwright tests, the CI `e2e-tests` job passes, and the Maintainer has replied with explicit PASS on the manual check.
 - **Implementation:** Playwright (TypeScript); tests drive a headless Chromium browser against the running application outside the Docker container.
 
 ### 10. Release Manager
 - **Goal:** Plan, coordinate, and execute releases.
-- **Deliverables:** Pull request, release notes, versioning, deployment plan, and post-release checklist.
+- **Deliverables:** Pull request (ready for review), release notes, versioning, deployment plan, and post-release checklist.
 - **Key Behavior:** Write release notes as honest, technical notes for users (not marketing), include ✨/🐛/📚 icons, include a 🔗 Commits section with user-facing commits, and only include ▶️ Getting started / 📸 Screenshots when applicable (screenshots required for user-visible output changes).
-- **Definition of Done:** PR is created and merged, release is published, documented, and verified.
+- **mark-ready:** Calls `scripts/pr-github.sh mark-ready` to convert the existing draft PR (auto-created by GitHub when issue was assigned to `@copilot`) from draft → ready-for-review. This fires the `ready_for_review` GitHub Actions event, which triggers the **PR Validation** pipeline:
+  1. **Docker build & push** — builds `src/Dockerfile` and pushes image to GHCR as `ghcr.io/…:pr-N-sha`
+  2. **E2E tests** — pulls the image, starts the container, runs Playwright tests from `e2e-tests/`
+  CI failures are monitored by the Orchestrator via `watch-pr-validation` and routed back to Developer.
+- **Maintainer touchpoint:** Approve and merge the PR in the GitHub UI once CI is green. This is the single required human action before the post-merge release pipeline runs.
+- **Definition of Done:** PR is merged by the Maintainer, release pipeline completes, GitHub Release published, Docker image in GHCR, CHANGELOG updated.
 
 ### 10. Retrospective
 - **Goal:** Identify improvement opportunities for the development workflow.
@@ -398,17 +414,6 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 - **Deliverables:** A prioritized workflow-improvement `tasks.md` (with status), updated agent definitions, workflow documentation updates, PRs with workflow changes.
 - **Definition of Done:** Workflow changes are documented, committed, and PR is created.
 - **Note:** Can operate in both local (chat) and cloud (issue) contexts. This agent operates outside the normal feature development flow.
-
-### 13. Web Designer (Specialized Agent)
-- **Goal:** Design, develop, and maintain the `<project-name>` website hosted on GitHub Pages.
-- **Execution Modes:**
-  - **Cloud (GitHub):** Automated content/style updates via issue assignment for well-defined changes
-- **Deliverables:** Website pages (HTML/CSS), design prototypes, website content derived from existing documentation.
-- **Initial Creation:** Handoff from Architect after technical approach is defined.
-- **Ongoing Changes:** Direct handoff from Maintainer for content, design, or functionality updates (local), or via GitHub issue assignment (cloud).
-- **Definition of Done:** Website changes are complete, accessible (WCAG 2.1 AA), responsive, and the agent provides verification evidence (changed files, Problems panel clean, VS Code preview render, DevTools console clean, style/NFR checklist). DevTools is mandatory in local mode; if Chrome DevTools MCP can’t connect, the agent is blocked and must not claim completion. Website verification must be real: if `scripts/git-status.sh --porcelain=v1` shows website changes, `scripts/website-verify.sh` must not be allowed to silently no-op.
-- **Cloud Limitations:** Cannot generate screenshots, preview locally, or use Chrome DevTools. Best for content/text updates and style changes that don't require visual verification.
-- **Note:** This agent operates independently for website-specific work. Website files live in `/website/` directory with isolated CI/CD pipeline triggers.
 
 ---
 
@@ -551,9 +556,8 @@ Example: If the most recent feature is `025-...` and a workflow item `026-...` a
 | Feature Development | `feature/` | `feature/123-firewall-diff-display` | Requirements Engineer, Developer |
 | Bug Fixes / Incidents | `fix/` | `fix/004-release-pipeline-failure-awk` | Issue Analyst, Developer |
 | Workflow Improvements | `workflow/` | `workflow/028-improvement-opportunities` | Workflow Engineer |
-| Website Changes | `website/` | `website/homepage-redesign` | Web Designer |
 
-**GitHub Copilot PR branch exception:** When GitHub creates a coding-agent pull request, it may place the work on an auto-generated `copilot/*` branch. That branch name is an execution-context detail for the existing PR, not a replacement for the underlying `feature/`, `fix/`, `workflow/`, or `website/` work-item convention. Continue to use the matching work-item folder and workflow type, and do not treat `copilot/*` by itself as a workflow violation.
+**GitHub Copilot PR branch exception:** When GitHub creates a coding-agent pull request, it may place the work on an auto-generated `copilot/*` branch. That branch name is an execution-context detail for the existing PR, not a replacement for the underlying `feature/`, `fix/`, or `workflow/` work-item convention. Continue to use the matching work-item folder and workflow type, and do not treat `copilot/*` by itself as a workflow violation.
 
 **Note:** The Requirements Engineer creates the feature branch at the start of the feature workflow. The Issue Analyst creates the fix branch at the start of the bug fix workflow. All subsequent agents work on the same branch until Release Manager creates the pull request.
 
@@ -570,20 +574,17 @@ Each agent hands off to the next by producing a specific deliverable. The workfl
 | Issue Analyst           | Developer               | Issue Analysis with root cause and fix approach      |
 | Requirements Engineer   | Architect               | Feature Specification                                |
 | Architect               | Quality Engineer        | Architecture Decision Records (ADRs)                 |
-| Architect               | Web Designer            | Architecture/technical approach (for initial website creation only) |
 | Quality Engineer        | Task Planner            | Test Plan & Test Cases                               |
 | Task Planner            | Developer               | User Stories / Tasks with Acceptance Criteria        |
 | Developer               | Technical Writer        | Code & Tests                                         |
 | Technical Writer        | Code Reviewer           | Updated Documentation                                |
 | Code Reviewer           | UAT Tester (user-facing features) <br/> Release Manager (internal changes) <br/> Developer (rework needed) | Code Review Report |
-| UAT Tester              | Release Manager (approved) <br/> Developer (rendering issues) | User Acceptance PRs verified |
-| Release Manager         | CI/CD Pipeline, GitHub  | Pull Request, Release Notes                          |
+| UAT Tester              | Release Manager (PASS) <br/> Developer (E2E / UAT Failures) | E2E tests committed + Maintainer PASS/FAIL |
+| Release Manager         | CI/CD Pipeline, GitHub  | Pull Request (ready for review), Release Notes       |
 | Release Manager         | Retrospective           | Deployment Complete                                  |
 | Retrospective           | Workflow Engineer       | Retrospective Report with Action Items               |
-| Web Designer            | Release Manager         | Website changes complete (design, content, implementation) |
-| Maintainer              | Web Designer            | Direct request for website changes (ongoing maintenance) |
 
-**Exception:** Code Reviewer has three possible handoffs depending on approval status and feature type. UAT Tester hands to Release Manager when approved, or back to Developer if rendering issues are found. Release Manager may hand back to Developer if build/release fails.
+**Exception:** Code Reviewer has three possible handoffs depending on approval status and feature type. UAT Tester hands to Release Manager on PASS, or back to Developer on any failure (broken use case, wrong data, UI defect, or failing E2E tests). Release Manager may hand back to Developer if build/release fails.
 
 Handoffs are triggered when the deliverable is complete and meets the "Definition of Done" for that agent. Automation (e.g., GitHub Actions) can be used to detect completion and notify the next agent(s).
 
@@ -617,7 +618,6 @@ Default prompts use the short agent names (e.g., `/dev`). These are the default 
 - `/wo` Workflow Orchestrator (orchestrate complete workflow from issue to release)
 - `/re` Requirements Engineer
 - `/ia` Issue Analyst
-- `/wd` Web Designer
 - `/ar` Architect (matches Requirements Engineer -> Architect handoff)
 - `/qe` Quality Engineer (matches Architect -> Quality Engineer handoff)
 - `/tp` Task Planner (matches Quality Engineer -> Task Planner handoff)
@@ -639,7 +639,6 @@ Non-default prompts add a suffix describing what the agent should do instead of 
 - `/dev-fix-build-failed` Developer fix (CI/release build failed)
 - `/dev-fix-ia-handoff` Developer fix (Issue Analyst -> Developer transition; uses `analysis.md`)
 - `/rm-no-uat` Release Manager (prepare release with no UAT)
-- `/rm-website-pr` Release Manager (create PR for website changes)
 
 For prompts that correspond to a workflow handoff, the prompt text is kept identical to the handoff button prompt.
 
