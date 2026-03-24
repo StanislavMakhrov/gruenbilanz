@@ -40,6 +40,10 @@ export async function renderReport(type: ReportType, data: ReportData): Promise<
       ? React.createElement(GHGReport, { data })
       : React.createElement(CSRDQuestionnaire, { data });
 
-  const buffer = await renderToBuffer(component);
+  // Cast required: renderToBuffer expects ReactElement<DocumentProps> but our wrapper
+  // components return ReactElement<GHGReportProps/CSRDQuestionnaireProps>. The runtime
+  // behaviour is correct because GHGReport/CSRDQuestionnaire renders a <Document> root.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const buffer = await renderToBuffer(component as React.ReactElement<any>);
   return Buffer.from(buffer);
 }
