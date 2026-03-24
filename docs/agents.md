@@ -143,8 +143,8 @@ Format:
 | `git-rebase-main`              | Safely rebase the current feature branch on top of the latest origin/main.                                                                                                                                                                                |
 | `merge-conflict-resolution`    | Resolve git merge/rebase conflicts safely without losing intended changes; verify by reviewing diffs and searching for conflict markers.                                                                                                                  |
 | `next-issue-number`            | Determine the next available issue number across all change types (feature, fix, workflow) by checking both local docs and remote branches, then reserve it by pushing an empty branch.                                                                   |
-| `generate-demo-artifacts`      | Generate the comprehensive demo markdown artifact from the current codebase.                                                                                                                                                                              |
-| `generate-release-screenshots` | Generate PNG screenshots for release notes using the repository's HtmlRenderer and ScreenshotGenerator tools. Use when asked to add screenshots to release notes or documentation.                                                                        |
+| `generate-demo-artifacts`      | Seed the running app with demo data for UAT or manual testing. Use before UAT to ensure the app has realistic data that covers the feature being tested.                                                                                                  |
+| `generate-release-screenshots` | Capture PNG screenshots of the running web app via Playwright + Docker. Used by UAT Tester (during e2e tests) and Release Manager (if UAT screenshots are missing). Saves to `docs/features/NNN-.../screenshots/`.                                                    |
 | `run-unit-tests`               | Run the project test suite using `npm test` (Vitest) from the `src/` directory. Use `npm run test:watch` for development.                                                                                                                                 |
 | `update-workflow-diagram`      | Convert the mermaid diagram in docs/agents.md to a blueprint-styled SVG for the website. Use when the workflow diagram is updated.                                                                                                                        |
 | `view-pr-github`               | View a GitHub PR (prefer GitHub chat tools; gh is fallback with pager disabled).                                                                                                                                                                          |
@@ -152,6 +152,9 @@ Format:
 | `agent-model-selection`        | Guidelines for selecting appropriate language models for agents based on task-specific benchmarks, availability, and cost efficiency.                                                                                                                     |
 | `validate-agent`               | Validate agent definitions for consistency, model availability, handoff integrity, and tool existence.                                                                                                                                                    |
 | `watch-pr-validation`          | After finishing work and pushing changes, automatically find and watch the PR Validation pipeline, then read errors and fix failures if the build is red. Use this after every report_progress call.                                                      |
+| `pre-push-validation`          | Run all PR Validation checks locally before pushing to ensure the PR passes CI without maintainer intervention.                                                                                                                                          |
+| `update-test-snapshots`        | Regenerate test snapshot (golden file) baselines after intentional UI or output changes. Use after modifying rendering logic, templates, or UI components.                                                                                                |
+| `watch-uat-github-pr`          | Watch a GitHub UAT PR for maintainer feedback or approval by polling comments until approved/passed.                                                                                                                                                     |
 
 ## Workflow Overview
 
@@ -317,6 +320,10 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 
 **Note:** All agents support both local (VS Code) and cloud (GitHub) execution modes. Each agent automatically detects its environment and adapts its behavior accordingly. See [Cloud Agents vs Local Agents](#cloud-agents-vs-local-agents) for details.
 
+### Maintainer (Human — not an agent)
+- **Role:** The Maintainer is the human who coordinates the entire workflow. They start chat sessions with agents in VS Code, approve work, answer clarifying questions, and perform the two required human actions: replying `PASS`/`FAIL` on the UAT PR comment, and approving & merging the final PR in the GitHub UI.
+- **Not an agent:** The Maintainer does not have an agent definition file. They coordinate via VS Code Copilot Chat or GitHub issues.
+
 ### 0. Workflow Orchestrator (Optional Automation)
 - **Goal:** Orchestrate complete development workflows from issue to release with minimal maintainer interaction.
 - **Use Cases:**
@@ -355,7 +362,6 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 ### 4. Quality Engineer
 - **Goal:** Define how the feature will be tested and validated.
 - **Deliverables:** Test plan, test cases, quality criteria. For user-facing features, user acceptance scenarios for manual review via PRs.
-- **Model:** Claude Sonnet 4.6
 - **Definition of Done:** Test plan covers all acceptance criteria. User-facing features have clear acceptance scenarios defined.
 
 ### 5. Task Planner
@@ -401,7 +407,7 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 - **Maintainer touchpoint:** Approve and merge the PR in the GitHub UI once CI is green. This is the single required human action before the post-merge release pipeline runs.
 - **Definition of Done:** PR is merged by the Maintainer, release pipeline completes, GitHub Release published, Docker image in GHCR, CHANGELOG updated.
 
-### 10. Retrospective
+### 11. Retrospective
 - **Goal:** Identify improvement opportunities for the development workflow.
 - **Deliverables:** Retrospective report with summary, successes, failures, and improvement opportunities.
 - **Key Behavior:** Be evidence-based and critical; prefer chat logs/artifacts/CI status checks for objective event history, cluster findings by theme, and apply a scoring rubric with explicit deductions.
@@ -444,7 +450,7 @@ When multiple branches are created in parallel, they may independently pick the 
 | **User Stories / Tasks** | Actionable work items with clear acceptance criteria. Used to track implementation progress (features) or workflow improvement work (workflow). | Markdown. For workflow improvements, use a table with a Status column (icon + text) and a short rationale per item. | `docs/features/NNN-<feature-slug>/tasks.md` and `docs/workflow/NNN-<topic-slug>/tasks.md` |
 | **Test Plan & Test Cases** | Defines how the feature will be verified. Maps test cases to acceptance criteria. For user-facing features, includes user acceptance scenarios for manual review. | Markdown document with: Test Objectives, Test Cases (ID, Description, Steps, Expected Result), Coverage Matrix, User Acceptance Scenarios (for user-facing features). | `docs/features/NNN-<feature-slug>/test-plan.md` |
 | **UAT Test Plan** | For user-facing features, defines what will be tested during UAT and provides validation instructions for the maintainer. | Markdown document specifying: Goal, Test Steps, Expected Results, Validation Instructions. | `docs/features/NNN-<feature-slug>/uat-test-plan.md` |
-| **User Acceptance PRs** | Real-environment verification for user-facing features (especially markdown rendering). Used to catch rendering bugs and validate real-world usage. Managed by UAT Tester agent. | Temporary PRs in GitHub and Azure DevOps. **Two markdown reports** are posted as separate PR comments: (1) **🎯 Feature Test** - feature-specific artifact exercising the changes, (2) **🔄 Regression Test** - comprehensive demo ensuring no side effects. Fixes posted as new comments. Approval is either **interactive** (Maintainer replies PASS/FAIL in chat) or **automated polling** (GitHub: `uat-approved` / `uat-rejected` labels; Azure DevOps: reviewer votes). For interactive runs, `scripts/uat-run.sh --create-only` + `--cleanup-last` provides a one-command create/cleanup workflow, and prints a copy/paste-friendly “UAT PR links” block for the Maintainer to paste into chat. UAT branches are created in **dedicated UAT repositories via git submodules** (`uat-repos/github` and `uat-repos/azdo`) so the UAT repos remain completely separate from this repo’s history. | GitHub + Azure DevOps (via `scripts/uat-*.sh`) |
+| **User Acceptance Testing** | Real-environment verification for user-facing features. UAT Tester writes Playwright e2e tests (committed to `e2e-tests/`) that run automatically in CI, and posts a PR comment with optional manual verification instructions for the Maintainer. | Playwright e2e tests at `e2e-tests/<feature-slug>/e2e.spec.ts`. PR comment with manual checklist, `docker run` instructions, and demo login credentials. Maintainer replies `PASS` or `FAIL: <page>, <expected>, <actual>`. | `e2e-tests/<feature-slug>/e2e.spec.ts`, PR comments |
 | **Code & Tests** | Implementation of the feature including unit tests, integration tests, and any necessary refactoring. | Source code files following project conventions. Tests in `src/tests/` directory. | `src/` and `src/tests/` directories |
 | **Documentation** | Updated user-facing and developer documentation reflecting the new feature. | Markdown files following existing documentation structure. | `docs/`, `README.md` |
 | **Code Review Report** | Feedback on code quality, adherence to standards, and approval status. May request rework. | Markdown document with: Summary, Issues Found, Recommendations, Approval Status. | `docs/features/NNN-<feature-slug>/code-review.md` |
@@ -528,7 +534,7 @@ For feature and bug fix workflows, the **Code Reviewer** must verify that the fo
 | Document | Check |
 |----------|-------|
 | `docs/architecture.md` | Updated if the feature introduces new components, patterns, or architectural changes |
-| `docs/features.md` | Updated with new feature descriptions (required for all features) |
+| `docs/features.md` | Updated with a summary entry for each new feature (required for all features). The Technical Writer appends a row when documenting a new feature. |
 | `docs/testing-strategy.md` | Updated if new test patterns, frameworks, or testing approaches were introduced |
 | `README.md` | Updated if the feature affects installation, usage, CLI options, or quick start |
 | `docs/agents.md` | Updated if the workflow or agent behavior changed |
