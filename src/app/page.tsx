@@ -27,7 +27,8 @@ import type { SerializedAuditLog } from '@/components/dashboard/AuditLogPanel';
 import Link from 'next/link';
 
 interface DashboardPageProps {
-  searchParams: { year?: string };
+  // Next.js 15: searchParams is now a Promise — must be awaited before use
+  searchParams: Promise<{ year?: string }>;
 }
 
 /** CO₂e per category, accumulated across all entries for a given year */
@@ -79,6 +80,8 @@ const BRANCHE_LABELS: Record<string, string> = {
 };
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  // Next.js 15 requires awaiting searchParams before accessing its properties
+  const { year: yearParam } = await searchParams;
   /* ── Fetch all data in parallel ─────────────────────────────────────── */
   let company = null;
   let reportingYears: { id: number; year: number }[] = [];
@@ -97,7 +100,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     ]);
 
     // Determine active year from URL param or default to most recent
-    const requestedYear = searchParams.year ? parseInt(searchParams.year) : null;
+    const requestedYear = yearParam ? parseInt(yearParam) : null;
     currentYearRecord =
       (requestedYear
         ? reportingYears.find((y) => y.year === requestedYear)
