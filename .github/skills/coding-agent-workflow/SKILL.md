@@ -20,21 +20,17 @@ This skill is automatically loaded by all coding agents. It defines the core wor
 
 ### CRITICAL: Branch and PR Management
 
-**GitHub Copilot automatically creates a branch** - you do NOT create it:
-- When an issue is assigned to `@copilot` or a session starts, GitHub automatically creates a `copilot/*` branch
-- When you start working, you're already on the correct branch
+**GitHub Copilot automatically creates branches and PRs** - you do NOT create them:
+- When an issue is assigned to `@copilot`, GitHub automatically creates a `copilot/*` branch and draft PR
+- When you start working, you're already on the correct branch with an active PR
 - **NEVER run `git checkout`, `git switch`, or `git branch` commands** - you're already on the right branch
+- **NEVER attempt to create a new PR** - one already exists for your work
 - Your job is to commit work to the existing branch using `report_progress` (which handles git push automatically)
 
-**Why manual branch creation fails:**
+**Why this fails:**
 - Manual `git checkout -b` commands will fail (permission denied)
-- Branch creation is GitHub's responsibility, not yours
-
-**Pull Request Creation:**
-- GitHub no longer automatically creates a draft PR when a session starts
-- The agent is responsible for creating the PR at the end of the session using the **`create-pr-github`** skill
-- After all work is pushed with `report_progress` and CI is green, always invoke the `create-pr-github` skill to open the PR
-- Never create a duplicate PR if one already exists for your branch
+- Attempting to create PRs will fail or create duplicate PRs
+- These operations are GitHub's responsibility, not yours
 
 1. **For Direct Questions (When Running as Primary Agent)**: If you are the primary agent on a PR (not delegated via `task` tool), you can create PR comments to ask the Maintainer questions. Wait for a response before proceeding.
 

@@ -36,29 +36,7 @@ For project-specific instructions, refer to the `docs/architecture.md` and `docs
 
 **If you are running as a GitHub Copilot coding agent** (assigned issues via `@copilot`, PR coding agent on `copilot/*` branches), you **MUST** use the `report_progress` tool for all commits and pushes. **Manual `git push` commands will fail.**
 
-### Entry Point: Workflow Orchestrator (MANDATORY for Issue Assignments)
-
-**When you are triggered from a GitHub issue assignment** (i.e. the session was started because a GitHub issue was assigned to `@copilot`), you **MUST NOT implement the feature directly**. You must act as the **Workflow Orchestrator**:
-
-1. **Load** `.github/agents/workflow-orchestrator-coding-agent.agent.md` and follow its instructions as your primary directive.
-2. **Delegate** all work to the specialized agents in the correct sequence:
-   - **Features**: Requirements Engineer → Architect → Quality Engineer → Task Planner → Developer → Technical Writer → Code Reviewer → [UAT Tester] → Release Manager → Retrospective
-   - **Bugs**: Issue Analyst → Developer → Technical Writer → Code Reviewer → [UAT Tester] → Release Manager → Retrospective
-   - **Workflow**: Workflow Engineer → Release Manager
-3. **Never implement code, write docs, or produce artifacts yourself** — your role is purely to orchestrate.
-
-This is the mechanism that routes issue assignments through the full workflow pipeline described in `docs/agents.md` § Automated Orchestration.
-
-> **Exception**: If a previous orchestrator session produced substantive artifacts — i.e., files such as `docs/features/<N>-*/specification.md` or `docs/adr/*.md` already exist in the branch from a prior Requirements Engineer or Architect session — and the session is being re-invoked specifically to continue development, you may start from the appropriate step. **The automatic "Initial plan" commit that GitHub Copilot creates at session start does NOT satisfy this exception.** Before applying this exception, verify that actual orchestrator artifacts exist in `docs/features/` or `docs/adr/`. If those files do not exist, the exception does not apply and you must act as Workflow Orchestrator.
-
 **Exception — subagents spawned via `task` tool**: `report_progress` is NOT available to subagents. They must use `git commit` instead (see below).
-
-### Pull Request Creation
-
-GitHub no longer automatically creates a draft PR when a coding agent session starts. The agent is responsible for creating the PR:
-
-- After all work is pushed with `report_progress` and CI is green, always use the **`create-pr-github`** skill to open the PR.
-- **Never create a duplicate PR** if one already exists for your branch.
 
 ### CI Accountability (MANDATORY)
 
@@ -67,7 +45,6 @@ GitHub no longer automatically creates a draft PR when a coding agent session st
 1. **Before pushing**: Run the `pre-push-validation` skill (lint, type-check, test, build, markdownlint) locally. Do not push code that fails any check.
 2. **After pushing**: Load and follow the `watch-pr-validation` skill. It covers the complete loop: find the triggered PR Validation run, watch it, read failure logs if it fails, fix issues, re-validate locally, and push again.
 3. **Before handoff**: Confirm CI is green. Do not hand off a PR with failing checks to the next agent or to the Maintainer.
-4. ⛔ **HARD RULE — NO HANDOFF WITH DRAFT PR**: Before ending your session, verify the PR is **not** in draft state. A draft PR means PR Validation was never triggered — "no failures" is **not** the same as "CI passed". Call `scripts/pr-github.sh mark-ready` (idempotent — safe to call even if already ready), then watch CI via the `watch-pr-validation` skill until green. **Handing off with a draft PR is a workflow violation.**
 
 ### Why Manual Git Commands Fail
 
