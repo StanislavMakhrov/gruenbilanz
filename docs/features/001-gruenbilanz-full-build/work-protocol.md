@@ -140,3 +140,13 @@
   - `src/package-lock.json` — regenerated, pinning `next@15.2.9` (no `14.2.35` references)
   - `.gitignore` — removed `src/package-lock.json` exclusion
 - **Problems Encountered:** None. `npm install --package-lock-only` succeeded without downloading packages (meta-only resolution).
+
+### Code Reviewer
+- **Date:** 2026-03-24
+- **Summary:** Reviewed all 76+ source files against the specification, architecture doc, and coding conventions. All 27 unit tests pass. Found 2 Blockers (runtime crashes due to Prisma field name mismatches in the OCR and document-download routes), 3 Major issues (non-atomic staging transaction, explicit `any` types in badge route, GHGReport.tsx exceeding line limit), and several minor issues/suggestions. Verdict: **CHANGES REQUESTED**.
+- **Artifacts Produced:**
+  - `docs/features/001-gruenbilanz-full-build/code-review.md` — full review report
+- **Problems Encountered:**
+  - Could not run `next build` or Docker build (no internet/Docker daemon in agent environment).
+  - TypeScript type check not run locally (requires `npm install`); `any` type violations found by static code inspection.
+- **Next Steps:** Developer agent must fix the 2 Blockers and 3 Major issues, then return for re-approval. After approval: UAT Tester.
