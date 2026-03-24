@@ -76,7 +76,7 @@ export default function DienstreisenScreen({ reportingYearId, year }: Dienstreis
     e.preventDefault();
     const ok = await saveAll();
     if (ok) {
-      toast.success('Dienstreisenddaten gespeichert.');
+      toast.success('Dienstreisendaten gespeichert.');
       saveWizardStatus('dienstreisen', computeStatus(values));
     } else {
       toast.error('Speichern fehlgeschlagen');

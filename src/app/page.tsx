@@ -158,8 +158,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         metadata: l.metadata,
       }));
     }
-  } catch {
-    // DB unavailable — render empty state; useful during cold starts
+  } catch (err) {
+    // DB unavailable (e.g. during build/static generation) — render empty state gracefully
+    console.error('Dashboard data fetch error:', err);
   }
 
   const year = currentYearRecord?.year ?? new Date().getFullYear();

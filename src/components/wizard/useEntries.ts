@@ -8,7 +8,7 @@
  * @param scope - The GHG Scope for these entries
  * @param categories - The EmissionCategory keys for this screen
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { saveEntry } from '@/lib/actions';
 import type { Scope, EmissionCategory } from '@prisma/client';
 
@@ -50,13 +50,19 @@ export function useEntries(
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Use refs for `scope` and `categories` to prevent the effect from re-firing
+  // when the parent re-renders with a new array reference to the same categories.
+  // These values are intentionally stable (module-level constants in all callers).
+  const scopeRef = useRef(scope);
+  const categoriesRef = useRef(categories);
+
   // Load existing entries from the API on mount
   useEffect(() => {
     if (!reportingYearId) return;
     setIsLoading(true);
     const params = new URLSearchParams({
       reportingYearId: String(reportingYearId),
-      scope,
+      scope: scopeRef.current,
     });
     fetch(`/api/entries?${params}`)
       .then((r) => r.json())
@@ -65,7 +71,7 @@ export function useEntries(
         setValues((prev) => {
           const next: EntryMap = { ...prev };
           for (const entry of data) {
-            if (categories.includes(entry.category as EmissionCategory)) {
+            if (categoriesRef.current.includes(entry.category as EmissionCategory)) {
               next[entry.category] = {
                 quantity: entry.quantity,
                 isOekostrom: entry.isOekostrom,
@@ -79,7 +85,6 @@ export function useEntries(
       })
       .catch(() => {/* DB unavailable during dev — keep defaults */})
       .finally(() => setIsLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportingYearId]);
 
   const setValue = useCallback((category: string, partial: Partial<EntryValue>) => {
