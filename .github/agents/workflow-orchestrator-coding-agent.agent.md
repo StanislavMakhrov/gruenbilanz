@@ -140,8 +140,23 @@ Before starting orchestration:
 ## Orchestration Workflow
 
 ### 1. Parse and Delegate Immediately
-- Read the complete issue body
-- Extract what you can understand about the type (feature, bug, or workflow)
+
+**CRITICAL: Determine issue type from labels first, then body — never from the title alone.**
+
+The issue title is often ambiguous (e.g. "Building the GrünBilanz app" is a feature, not a build failure). Always follow this priority order to classify the issue type:
+
+1. **Check GitHub issue labels** (highest priority):
+   - Label contains `feature`, `enhancement`, `type: feature` → **Feature**
+   - Label contains `bug`, `defect`, `type: bug` → **Bug**
+   - Label contains `workflow`, `process`, `type: workflow` → **Workflow**
+
+2. **Check issue body** (if no clear label):
+   - Body describes expected new behavior, new capabilities, or a new system to build → **Feature**
+   - Body describes something that used to work and is now broken, or unexpected behavior → **Bug**
+   - Body describes improvements to the agent/CI/workflow process itself → **Workflow**
+
+3. **When in doubt**: default to **Feature** (Requirements Engineer), not Bug. The Requirements Engineer can redirect if needed, but the Issue Analyst is only for defects.
+
 - **Immediately delegate** to the appropriate entry point agent:
   - Features → Requirements Engineer (they will gather any missing requirements)
   - Bugs → Issue Analyst (they will investigate and clarify details)
