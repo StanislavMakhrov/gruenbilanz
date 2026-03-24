@@ -131,3 +131,12 @@
   - `.gitignore` — added `src/package-lock.json` exclusion rule
   - `docs/features/001-gruenbilanz-full-build/work-protocol.md` — appended Phase 6-8, Phase 9, and Technical Writer log entries
 - **Problems Encountered:** None. `src/package-lock.json` was tracked by git but not gitignored; removed via `git rm --cached` so the file remains on disk for local development but will no longer be committed.
+
+### Security Patch (Next.js CVE remediation)
+- **Date:** 2026-03-24
+- **Summary:** Upgraded `next` and `eslint-config-next` from `15.0.8` to `15.2.9` in `src/package.json` to patch five CVEs in the Next.js 15.x line (RSC HTTP deserialization DoS, cache-poisoning DoS, middleware auth bypass, React Flight RCE, RSC deserialization DoS). Updated `.gitignore` to re-enable tracking of `src/package-lock.json`, regenerated the lock file via `npm install --package-lock-only`, and committed it so GitHub's dependency scanner can see the patched version.
+- **Artifacts Produced:**
+  - `src/package.json` — `next` + `eslint-config-next` bumped to `15.2.9`
+  - `src/package-lock.json` — regenerated, pinning `next@15.2.9` (no `14.2.35` references)
+  - `.gitignore` — removed `src/package-lock.json` exclusion
+- **Problems Encountered:** None. `npm install --package-lock-only` succeeded without downloading packages (meta-only resolution).
