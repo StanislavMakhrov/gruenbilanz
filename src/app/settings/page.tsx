@@ -6,7 +6,12 @@
  *
  * Entry counts are queried via Prisma; CO₂e totals are omitted here to avoid
  * expensive per-entry factor lookups — they are visible on the dashboard.
+ *
+ * force-dynamic prevents Next.js from pre-rendering this page at build time,
+ * which would fail because no database is available in the Docker build stage.
  */
+export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import SettingsClient, { type YearSummary } from './SettingsClient';
