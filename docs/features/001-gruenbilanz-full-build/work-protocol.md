@@ -23,3 +23,11 @@
 - **Artifacts Produced:**
   - `docs/features/001-gruenbilanz-full-build/architecture.md`
 - **Problems Encountered:** None. The architecture was already comprehensively defined in `docs/architecture.md`; this document provides the Developer with a consolidated, feature-scoped view of all implementation details.
+
+### Quality Engineer
+- **Date:** 2026-03-24
+- **Summary:** Read the feature specification, architecture document, and `docs/testing-strategy.md` in full. Created a comprehensive test plan mapping all 60+ acceptance criteria to automated test cases across five test types (unit, integration, component, E2E, smoke). Defined 31 factor keys and all edge cases for `lib/emissions.ts` and `lib/factors.ts` unit tests (≥ 80% coverage requirement). Specified integration tests for all 9 Server Actions covering happy path, upsert, cascade delete, and failure scenarios. Specified Playwright E2E tests for the primary happy path, year management, OCR stub flow, and PDF generation. Created a separate UAT test plan with 17 manual verification steps covering the full user journey in the running app.
+- **Artifacts Produced:**
+  - `docs/features/001-gruenbilanz-full-build/test-plan.md`
+  - `docs/features/001-gruenbilanz-full-build/uat-test-plan.md`
+- **Problems Encountered:** None. No existing test files were present (e2e-tests/ contains only `.gitkeep`), so all test case specifications are greenfield and follow conventions from `docs/testing-strategy.md`.
