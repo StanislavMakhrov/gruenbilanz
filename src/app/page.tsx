@@ -5,7 +5,12 @@
  *
  * Year selection is controlled by the `?year=YYYY` search param.
  * Defaults to the most recent reporting year in the database.
+ *
+ * force-dynamic prevents Next.js from pre-rendering this page at build time,
+ * which would fail because no database is available in the Docker build stage.
  */
+export const dynamic = 'force-dynamic';
+
 import { prisma } from '@/lib/prisma';
 import { calculateCO2e } from '@/lib/emissions';
 import { CATEGORY_LABELS, CATEGORY_SCOPE, SCOPE_LABELS } from '@/types';
