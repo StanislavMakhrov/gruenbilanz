@@ -431,3 +431,148 @@ Hand off to the **Developer** agent with these specific tasks:
 5. Refactor `src/components/reports/GHGReport.tsx` — extract styles to reduce to ≤300 lines
 
 After Developer fixes, return to Code Reviewer for re-approval, then proceed to UAT Tester.
+
+---
+
+## Re-Review: Developer Fixes Verification
+
+**Reviewer:** Code Reviewer Agent  
+**Date:** 2026-03-24  
+**Scope:** Verification of 5 issues fixed by Developer (2 Blockers + 3 Major)
+
+---
+
+### Fix 1 — Blocker 1: OCR Route Field Names (`src/app/api/ocr/route.ts`)
+
+**Verified ✅**
+
+The `prisma.uploadedDocument.create` call now correctly uses:
+
+```ts
+const buffer = Buffer.from(bytes);
+const uploadedDoc = await prisma.uploadedDocument.create({
+  data: {
+    filename: file.name,
+    mimeType: file.type,
+    sizeBytes: buffer.length,   // ✅ required field present
+    content: buffer,            // ✅ correct field name (was `data`)
+  },
+});
+```
+
+Both bugs are resolved: `data` → `content` and `sizeBytes` is now populated from
+`buffer.length` (derived from the ArrayBuffer, semantically equivalent to `file.size` and
+correct). No regression introduced.
+
+---
+
+### Fix 2 — Blocker 2: Document Download Route (`src/app/api/documents/[id]/route.ts`)
+
+**Verified ✅**
+
+The response now reads `doc.content` in all three locations:
+
+```ts
+return new NextResponse(doc.content, {
+  headers: {
+    'Content-Type': doc.mimeType,
+    'Content-Disposition': `attachment; filename="${encodeURIComponent(doc.filename)}"`,
+    'Content-Length': String(doc.content.length),
+  },
+});
+```
+
+The JSDoc comment on line 3 was also updated to reference `.content` (not `.data`). The
+`Content-Type` and `Content-Disposition` headers are now also set correctly (minor
+improvement over the original code). No regression introduced.
+
+---
+
+### Fix 3 — Major 1: Atomic Staging Transaction (`src/lib/actions/staging.ts`)
+
+**Verified ✅**
+
+The CREATE path of `confirmStagingEntry` now wraps all three operations in a single
+`prisma.$transaction(async (tx) => { ... })` callback:
+
+```ts
+await prisma.$transaction(async (tx) => {
+  const created = await tx.emissionEntry.create({ ... });
+  createdId = created.id;
+  await tx.stagingEntry.delete({ where: { id: stagingId } });
+  await tx.auditLog.create({ ... emissionEntryId: created.id ... });
+});
+```
+
+The previously non-atomic CREATE path that could produce orphaned `EmissionEntry` records
+is now fully atomic. The UPDATE path (existing entry) was already using `$transaction` and
+remains unchanged. No regression introduced.
+
+---
+
+### Fix 4 — Major 2: `any` Types Removed from Badge Route (`src/app/api/badge/route.ts`)
+
+**Verified ✅**
+
+All three `// eslint-disable-next-line @typescript-eslint/no-explicit-any` suppressions and
+their corresponding `any` casts have been removed. The map calls now use the Prisma-inferred
+types directly:
+
+```ts
+...entries.map((e) => ({ category: e.category as string, quantity: e.quantity, isOekostrom: e.isOekostrom })),
+...materialEntries.map((m) => ({ category: m.material as string, quantity: m.quantityKg })),
+```
+
+The PNG buffer cast uses `as unknown as BodyInit` — a safe double-cast through the unknown
+supertype, which is the TypeScript-idiomatic way to handle `Buffer`→`BodyInit` when the
+runtime accepts it. No `any` types remain in the file. No regression introduced.
+
+---
+
+### Fix 5 — Major 3: `GHGReport.tsx` Line Count (`src/components/reports/`)
+
+**Verified ✅**
+
+- `GHGReport.tsx`: **297 lines** (within the ≤300-line convention) ✅
+- `ScopeTable.tsx`: **49 lines** (new file, properly extracted sub-component) ✅
+
+`ScopeTable` is imported in `GHGReport.tsx` via:
+
+```ts
+import { ScopeTable } from './ScopeTable';
+```
+
+The component is used in all three scope sections (Scope 1, 2, 3). The extraction is clean:
+style constants are co-located in `ScopeTable.tsx` and the colour values are consistent with
+`GHGReport.tsx`. No regression introduced.
+
+---
+
+### Re-Verification Results
+
+| Check | Result |
+|-------|--------|
+| Unit tests (`cd src && npm test`) | ✅ 27/27 passing |
+| All 5 reported issues resolved | ✅ |
+| No new issues introduced | ✅ |
+| Line length convention met | ✅ GHGReport.tsx = 297 lines |
+| No remaining `any` types in badge route | ✅ |
+
+---
+
+### Re-Review Decision
+
+**Status: APPROVED ✅**
+
+All 5 issues from the initial review have been correctly and completely resolved:
+
+- Both runtime-crashing Blockers (wrong Prisma field names) are fixed.
+- The non-atomic transaction in the staging confirmation CREATE path is now fully atomic.
+- All `any` type casts in the badge route are removed.
+- `GHGReport.tsx` is within the 300-line convention via the clean `ScopeTable` extraction.
+
+The unit tests continue to pass (27/27). No regressions were introduced. The minor and
+suggestion-level issues from the original review remain open for the team's discretion but
+do not block release.
+
+**Next Step:** Hand off to **UAT Tester** agent for user-facing acceptance testing.

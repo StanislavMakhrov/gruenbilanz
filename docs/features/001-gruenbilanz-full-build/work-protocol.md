@@ -162,3 +162,11 @@
   - `src/components/reports/ScopeTable.tsx` — new file: extracted the `ScopeTable` sub-component from GHGReport.tsx
   - `src/components/reports/GHGReport.tsx` — removed inline `ScopeTable` definition (replaced by import), reduced from 324 → 297 lines (≤300 convention met)
 - **Problems Encountered:** None.
+
+### Code Reviewer (Re-Review)
+- **Date:** 2026-03-24
+- **Summary:** Verified all 5 fixes applied by the Developer. All unit tests continue to pass (27/27). Every fix was correctly and completely applied: OCR route now uses `content`/`sizeBytes`, document download uses `doc.content`, staging CREATE path is fully atomic, badge route has no `any` types, and `GHGReport.tsx` is 297 lines with `ScopeTable.tsx` properly extracted. Verdict: **APPROVED**.
+- **Artifacts Produced:**
+  - `docs/features/001-gruenbilanz-full-build/code-review.md` — re-review section appended with approval verdict
+- **Problems Encountered:** None.
+- **Next Steps:** UAT Tester agent should perform user-facing acceptance testing.
