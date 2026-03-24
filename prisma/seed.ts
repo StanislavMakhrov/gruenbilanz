@@ -415,25 +415,28 @@ async function main() {
   ];
 
   for (const entry of emissionEntries2023) {
-    await prisma.emissionEntry.upsert({
+    // Prisma does not support null in composite unique where clauses, so we
+    // use findFirst + create instead of upsert (same pattern as MaterialEntry).
+    const existing = await prisma.emissionEntry.findFirst({
       where: {
-        reportingYearId_scope_category_billingMonth_providerName: {
-          reportingYearId: year2023.id,
-          scope: entry.scope,
-          category: entry.category,
-          billingMonth: null as unknown as number,
-          providerName: null as unknown as string,
-        },
-      },
-      update: {},
-      create: {
         reportingYearId: year2023.id,
         scope: entry.scope,
         category: entry.category,
-        quantity: entry.quantity,
-        isOekostrom: entry.isOekostrom,
+        billingMonth: null,
+        providerName: null,
       },
     });
+    if (!existing) {
+      await prisma.emissionEntry.create({
+        data: {
+          reportingYearId: year2023.id,
+          scope: entry.scope,
+          category: entry.category,
+          quantity: entry.quantity,
+          isOekostrom: entry.isOekostrom,
+        },
+      });
+    }
   }
   console.log(`✓ EmissionEntries 2023 seeded (${emissionEntries2023.length} entries)`);
 
@@ -507,25 +510,28 @@ async function main() {
   ];
 
   for (const entry of emissionEntries2024) {
-    await prisma.emissionEntry.upsert({
+    // Prisma does not support null in composite unique where clauses, so we
+    // use findFirst + create instead of upsert (same pattern as MaterialEntry).
+    const existing = await prisma.emissionEntry.findFirst({
       where: {
-        reportingYearId_scope_category_billingMonth_providerName: {
-          reportingYearId: year2024.id,
-          scope: entry.scope,
-          category: entry.category,
-          billingMonth: null as unknown as number,
-          providerName: null as unknown as string,
-        },
-      },
-      update: {},
-      create: {
         reportingYearId: year2024.id,
         scope: entry.scope,
         category: entry.category,
-        quantity: entry.quantity,
-        isOekostrom: entry.isOekostrom,
+        billingMonth: null,
+        providerName: null,
       },
     });
+    if (!existing) {
+      await prisma.emissionEntry.create({
+        data: {
+          reportingYearId: year2024.id,
+          scope: entry.scope,
+          category: entry.category,
+          quantity: entry.quantity,
+          isOekostrom: entry.isOekostrom,
+        },
+      });
+    }
   }
   console.log(`✓ EmissionEntries 2024 seeded (${emissionEntries2024.length} entries)`);
 
