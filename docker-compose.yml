@@ -1,0 +1,37 @@
+version: "3.8"
+
+# GrünBilanz — Docker Compose configuration
+# Two services: app (Next.js + PostgreSQL via supervisord) and tesseract (OCR REST API).
+# Run with: docker compose up --build
+# The app service embeds PostgreSQL — no separate database container needed.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://gruenbilanz:gruenbilanz@localhost:5432/gruenbilanz
+      TESSERACT_URL: http://tesseract:3001
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      REPORTS_PATH: /app/reports
+    volumes:
+      - gruenbilanz_pgdata:/var/lib/postgresql/data
+    depends_on:
+      - tesseract
+
+  tesseract:
+    build:
+      context: docker/tesseract
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+
+volumes:
+  gruenbilanz_pgdata:
+    name: gruenbilanz_pgdata

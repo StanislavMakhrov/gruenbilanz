@@ -1,0 +1,288 @@
+// prisma/schema.prisma
+// GrünBilanz — database schema
+// All emission-related data is stored in PostgreSQL; emission factors are versioned
+// so calculations remain auditable when UBA publishes new factor tables.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Company Profile — single row (id = 1 always)
+// Added: reportingBoundaryNotes and exclusions for GHG Protocol Berichtsgrenzen section
+// ─────────────────────────────────────────────────────────────────────────────
+model CompanyProfile {
+  id                     Int      @id @default(1)
+  firmenname             String
+  branche                Branche
+  mitarbeiter            Int
+  standort               String // "München, Bayern"
+  logoPath               String? // relative path inside container or base64
+  reportingBoundaryNotes String? // free text — appears in PDF Berichtsgrenzen section
+  exclusions             String? // free text — Ausschlüsse & Annahmen
+  updatedAt              DateTime @updatedAt
+}
+
+enum Branche {
+  ELEKTROHANDWERK
+  SHK
+  BAUGEWERBE
+  TISCHLER
+  KFZ_WERKSTATT
+  MALER
+  SONSTIGES
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reporting Years
+// ─────────────────────────────────────────────────────────────────────────────
+model ReportingYear {
+  id        Int      @id @default(autoincrement())
+  year      Int      @unique // e.g. 2024
+  createdAt DateTime @default(now())
+
+  entries         EmissionEntry[]
+  materialEntries MaterialEntry[]
+  stagingEntries  StagingEntry[]
+  reports         Report[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Emission Entries — Scope 1, Scope 2, and Scope 3 activities.
+// Decision: unified table with scope+category discriminator (see ADR-002).
+//
+// Extended fields added post-MVP:
+//   billingMonth   — 1–12 for a monthly entry; null = annual entry
+//   isFinalAnnual  — when true, this annual entry supersedes any monthly entries
+//   providerName   — enables mid-year energy provider changes
+//   auditLogs      — back-reference to AuditLog entries for this row
+// ─────────────────────────────────────────────────────────────────────────────
+model EmissionEntry {
+  id              Int              @id @default(autoincrement())
+  reportingYearId Int
+  reportingYear   ReportingYear    @relation(fields: [reportingYearId], references: [id], onDelete: Cascade)
+  scope           Scope
+  category        EmissionCategory
+  quantity        Float
+  memo            String?
+  isOekostrom     Boolean          @default(false)
+  inputMethod     InputMethod      @default(MANUAL)
+  billingMonth    Int? // 1–12 for monthly entry; null for annual
+  isFinalAnnual   Boolean          @default(false)
+  providerName    String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  auditLogs       AuditLog[]
+
+  @@unique([reportingYearId, scope, category, billingMonth, providerName])
+}
+
+enum Scope {
+  SCOPE1
+  SCOPE2
+  SCOPE3
+}
+
+enum EmissionCategory {
+  // Scope 1 — direct
+  ERDGAS
+  HEIZOEL
+  FLUESSIGGAS
+  DIESEL_FUHRPARK
+  BENZIN_FUHRPARK
+  PKW_BENZIN_KM
+  PKW_DIESEL_KM
+  TRANSPORTER_KM
+  LKW_KM
+  R410A_KAELTEMITTEL // refrigerant leak — Scope 1 direct
+  R32_KAELTEMITTEL
+  R134A_KAELTEMITTEL
+  SONSTIGE_KAELTEMITTEL
+  // Scope 2 — indirect energy
+  STROM
+  FERNWAERME
+  // Scope 3 — activities
+  GESCHAEFTSREISEN_FLUG
+  GESCHAEFTSREISEN_BAHN
+  PENDLERVERKEHR
+  ABFALL_RESTMUELL
+  ABFALL_BAUSCHUTT
+  ABFALL_ALTMETALL
+  ABFALL_SONSTIGES
+}
+
+enum InputMethod {
+  MANUAL
+  OCR
+  CSV
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Material Entries — Scope 3 Category 1 (Purchased Materials)
+// Separate table because: multiple rows per year (a table, not one value per category)
+// and has a supplier name memo field (see ADR-002).
+// ─────────────────────────────────────────────────────────────────────────────
+model MaterialEntry {
+  id              Int              @id @default(autoincrement())
+  reportingYearId Int
+  reportingYear   ReportingYear    @relation(fields: [reportingYearId], references: [id], onDelete: Cascade)
+  material        MaterialCategory
+  quantityKg      Float
+  supplierName    String? // Memo only — not used in calculations
+  inputMethod     InputMethod      @default(MANUAL)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  auditLogs       AuditLog[]
+}
+
+enum MaterialCategory {
+  KUPFER
+  STAHL
+  ALUMINIUM
+  HOLZ
+  KUNSTSTOFF_PVC
+  BETON
+  FARBEN_LACKE
+  SONSTIGE
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Emission Factors — seeded from UBA 2024, versioned by valid_year
+// Lookup: SELECT * FROM EmissionFactor WHERE key = $key AND validYear <= $year
+//         ORDER BY validYear DESC LIMIT 1
+// ─────────────────────────────────────────────────────────────────────────────
+model EmissionFactor {
+  id        Int      @id @default(autoincrement())
+  key       String // e.g. "ERDGAS", "STROM_MIX", "KUPFER"
+  validYear Int // e.g. 2024
+  factorKg  Float // kg CO₂e per unit
+  unit      String // "m³", "L", "kg", "kWh", "km"
+  source    String // "UBA 2024", "Ecoinvent 3.10"
+  scope     Scope
+  createdAt DateTime @default(now())
+
+  @@unique([key, validYear])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Staging Entries — OCR and CSV import results before user confirmation
+// Created when OCR/CSV produces a value; deleted after user confirms or cancels.
+// Avoids polluting EmissionEntry with unconfirmed data (see ADR-003).
+// ─────────────────────────────────────────────────────────────────────────────
+model StagingEntry {
+  id              Int              @id @default(autoincrement())
+  reportingYearId Int
+  reportingYear   ReportingYear    @relation(fields: [reportingYearId], references: [id], onDelete: Cascade)
+  scope           Scope
+  category        EmissionCategory
+  quantity        Float
+  confidence      Float? // 0.0–1.0; populated by OCR, null for CSV
+  rawText         String? // original OCR text for debugging
+  source          StagingSource
+  createdAt       DateTime         @default(now())
+  expiresAt       DateTime // staging entries auto-expire after 24h if not confirmed
+
+  @@unique([reportingYearId, scope, category])
+}
+
+enum StagingSource {
+  OCR
+  CSV
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reports — generated PDF files, keyed by year
+// ─────────────────────────────────────────────────────────────────────────────
+model Report {
+  id              Int           @id @default(autoincrement())
+  reportingYearId Int
+  reportingYear   ReportingYear @relation(fields: [reportingYearId], references: [id], onDelete: Cascade)
+  type            ReportType
+  filePath        String // path inside container, served as static file
+  generatedAt     DateTime      @default(now())
+}
+
+enum ReportType {
+  GHG_PROTOCOL
+  CSRD_QUESTIONNAIRE
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Industry Benchmarks — seeded, one row per Branche
+// Values are kg CO₂e per employee per year (UBA sector averages)
+// ─────────────────────────────────────────────────────────────────────────────
+model IndustryBenchmark {
+  id                    Int     @id @default(autoincrement())
+  branche               Branche @unique
+  co2ePerEmployeePerYear Float // kg CO₂e per employee per year
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Field Documents — per-field invoice/receipt attachments
+// One attachment per (fieldKey, year). Stored on the container filesystem.
+// fieldKey is a category string (e.g. "ERDGAS_2024"). Displayed as a green
+// dashed zone under each numeric input field in the wizard.
+// ─────────────────────────────────────────────────────────────────────────────
+model FieldDocument {
+  id               Int      @id @default(autoincrement())
+  fieldKey         String // e.g. "ERDGAS_2024"
+  year             Int
+  filePath         String
+  originalFilename String
+  mimeType         String
+  uploadedAt       DateTime @default(now())
+
+  @@unique([fieldKey, year])
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Uploaded Documents — original source documents stored in the DB
+// Bytes are stored directly in PostgreSQL for self-contained deployment.
+// Referenced by AuditLog entries to provide download evidence.
+// ─────────────────────────────────────────────────────────────────────────────
+model UploadedDocument {
+  id         Int        @id @default(autoincrement())
+  filename   String
+  mimeType   String
+  sizeBytes  Int
+  content    Bytes // file bytes stored in DB
+  uploadedAt DateTime   @default(now())
+  auditLogs  AuditLog[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit Log — immutable record of every change to emission/material data.
+// Supports field-level change tracking (oldValue → newValue).
+// Links to source documents when data was imported via OCR or CSV.
+// Shown in: AuditLogPanel on the Dashboard and ScreenChangeLog in wizard screens.
+// ─────────────────────────────────────────────────────────────────────────────
+model AuditLog {
+  id              Int               @id @default(autoincrement())
+  entityType      String // "EmissionEntry", "MaterialEntry", "CompanyProfile"
+  entityId        Int?
+  action          AuditAction
+  fieldName       String? // which field changed
+  oldValue        String? // previous value serialised as string
+  newValue        String? // new value serialised as string
+  inputMethod     InputMethod       @default(MANUAL)
+  documentId      Int?
+  document        UploadedDocument? @relation(fields: [documentId], references: [id])
+  metadata        String? // JSON: {"category":"ERDGAS", ...}
+  emissionEntryId Int?
+  emissionEntry   EmissionEntry?    @relation(fields: [emissionEntryId], references: [id], onDelete: SetNull)
+  materialEntryId Int?
+  materialEntry   MaterialEntry?    @relation(fields: [materialEntryId], references: [id], onDelete: SetNull)
+  createdAt       DateTime          @default(now())
+}
