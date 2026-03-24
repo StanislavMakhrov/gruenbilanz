@@ -9,9 +9,11 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const id = parseInt(params.id);
+  // Next.js 15 requires awaiting route params (they are now Promise-based)
+  const { id: idStr } = await params;
+  const id = parseInt(idStr);
 
   if (isNaN(id)) {
     return NextResponse.json({ error: 'Ungültige Dokument-ID.' }, { status: 400 });
