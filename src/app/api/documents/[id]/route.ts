@@ -1,6 +1,6 @@
 /**
  * GET /api/documents/[id] — Streams an uploaded document's bytes.
- * The document bytes are stored in UploadedDocument.data (PostgreSQL Bytes).
+ * The document bytes are stored in UploadedDocument.content (PostgreSQL Bytes).
  */
 export const runtime = 'nodejs';
 
@@ -23,11 +23,11 @@ export async function GET(
     return NextResponse.json({ error: 'Dokument nicht gefunden.' }, { status: 404 });
   }
 
-  return new NextResponse(doc.data, {
+  return new NextResponse(doc.content, {
     headers: {
       'Content-Type': doc.mimeType,
       'Content-Disposition': `attachment; filename="${encodeURIComponent(doc.filename)}"`,
-      'Content-Length': String(doc.data.length),
+      'Content-Length': String(doc.content.length),
     },
   });
 }

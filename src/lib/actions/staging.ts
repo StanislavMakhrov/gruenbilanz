@@ -59,20 +59,23 @@ export async function confirmStagingEntry(
       return { success: true, id: existingEntry.id };
     }
 
-    const created = await prisma.emissionEntry.create({
-      data: {
-        reportingYearId: staging.reportingYearId,
-        scope: staging.scope,
-        category: staging.category,
-        quantity: staging.quantity,
-        inputMethod,
-        isFinalAnnual: false,
-      },
-    });
-
-    await prisma.$transaction([
-      prisma.stagingEntry.delete({ where: { id: stagingId } }),
-      prisma.auditLog.create({
+    // Wrap EmissionEntry creation, StagingEntry deletion, and AuditLog in a single
+    // atomic transaction so a mid-operation failure cannot produce orphaned entries.
+    let createdId: number | undefined;
+    await prisma.$transaction(async (tx) => {
+      const created = await tx.emissionEntry.create({
+        data: {
+          reportingYearId: staging.reportingYearId,
+          scope: staging.scope,
+          category: staging.category,
+          quantity: staging.quantity,
+          inputMethod,
+          isFinalAnnual: false,
+        },
+      });
+      createdId = created.id;
+      await tx.stagingEntry.delete({ where: { id: stagingId } });
+      await tx.auditLog.create({
         data: {
           entityType: 'EmissionEntry',
           entityId: created.id,
@@ -83,10 +86,10 @@ export async function confirmStagingEntry(
           documentId: documentId ?? null,
           emissionEntryId: created.id,
         },
-      }),
-    ]);
+      });
+    });
 
-    return { success: true, id: created.id };
+    return { success: true, id: createdId };
   } catch (error) {
     console.error('confirmStagingEntry error:', error);
     return { success: false, error: 'Bestätigung fehlgeschlagen. Bitte erneut versuchen.' };

@@ -13,6 +13,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import type { ReportData } from '@/lib/pdf';
+import { ScopeTable } from './ScopeTable';
 
 // ─── Brand colours ────────────────────────────────────────────────────────────
 const GREEN = '#2D6A4F';
@@ -125,34 +126,6 @@ const s = StyleSheet.create({
   footer: { position: 'absolute', bottom: 20, left: 40, right: 40, textAlign: 'center', fontSize: 7, color: GREY, borderTopColor: BORDER, borderTopWidth: 1, paddingTop: 3 },
   pageNum: { position: 'absolute', bottom: 20, right: 40, fontSize: 7, color: GREY },
 });
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-/** Reusable scope emissions table */
-function ScopeTable({
-  headers,
-  rows,
-}: {
-  headers: string[];
-  rows: Array<{ cells: string[]; widths: number[] }>;
-}) {
-  return (
-    <View style={{ marginBottom: 8 }}>
-      <View style={s.tblHeader}>
-        {headers.map((h, i) => (
-          <Text key={i} style={[s.tblHCell, { flex: i === 0 ? 3 : 1 }]}>{h}</Text>
-        ))}
-      </View>
-      {rows.map((row, ri) => (
-        <View key={ri} style={[s.tblRow, ri % 2 === 1 ? s.tblRowAlt : {}]}>
-          {row.cells.map((cell, ci) => (
-            <Text key={ci} style={[ci === 0 ? s.tblCell : s.tblMuted, { flex: ci === 0 ? 3 : 1 }]}>{cell}</Text>
-          ))}
-        </View>
-      ))}
-    </View>
-  );
-}
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export interface GHGReportProps {

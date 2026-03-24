@@ -46,11 +46,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Store uploaded document bytes in DB
     const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
     const uploadedDoc = await prisma.uploadedDocument.create({
       data: {
         filename: file.name,
         mimeType: file.type,
-        data: Buffer.from(bytes),
+        sizeBytes: buffer.length,
+        content: buffer,
       },
     });
 

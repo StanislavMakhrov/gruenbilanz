@@ -77,12 +77,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       if (company) companyName = company.firmenname;
 
       // Combine emission entries and material entries for total CO₂e calculation
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allEntries = [
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(entries as any[]).map((e: any) => ({ category: e.category as string, quantity: e.quantity as number, isOekostrom: e.isOekostrom as boolean })),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...(materialEntries as any[]).map((m: any) => ({ category: m.material as string, quantity: m.quantityKg as number })),
+        ...entries.map((e) => ({ category: e.category as string, quantity: e.quantity, isOekostrom: e.isOekostrom })),
+        ...materialEntries.map((m) => ({ category: m.material as string, quantity: m.quantityKg })),
       ];
 
       if (allEntries.length > 0) {
@@ -110,9 +107,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (format === 'png') {
       const sharp = (await import('sharp')).default;
       const pngBuffer = await sharp(Buffer.from(svgContent)).png().toBuffer();
-      // Buffer cast: Next.js accepts Buffer at runtime; TypeScript types require BodyInit cast
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return new NextResponse(pngBuffer as any, {
+      // Buffer extends Uint8Array; cast through unknown to satisfy NextResponse's BodyInit
+      return new NextResponse(pngBuffer as unknown as BodyInit, {
         headers: {
           'Content-Type': 'image/png',
           'Cache-Control': 'public, max-age=3600',

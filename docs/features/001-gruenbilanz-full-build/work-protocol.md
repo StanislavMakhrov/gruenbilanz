@@ -150,3 +150,15 @@
   - Could not run `next build` or Docker build (no internet/Docker daemon in agent environment).
   - TypeScript type check not run locally (requires `npm install`); `any` type violations found by static code inspection.
 - **Next Steps:** Developer agent must fix the 2 Blockers and 3 Major issues, then return for re-approval. After approval: UAT Tester.
+
+### Developer (Code Review Fixes)
+- **Date:** 2026-03-24
+- **Summary:** Fixed 2 blockers and 3 major issues identified by the Code Reviewer. All 27 unit tests pass after changes.
+- **Artifacts Modified:**
+  - `src/app/api/ocr/route.ts` — fixed field `data` → `content`, added `sizeBytes: buffer.length`
+  - `src/app/api/documents/[id]/route.ts` — fixed `doc.data` → `doc.content` (response body and Content-Length header); updated JSDoc comment
+  - `src/lib/actions/staging.ts` — made `confirmStagingEntry` new-entry path fully atomic: wrapped `emissionEntry.create` + `stagingEntry.delete` + `auditLog.create` into a single `prisma.$transaction(async tx => {...})` callback
+  - `src/app/api/badge/route.ts` — removed all `any` casts and `eslint-disable` suppressions; used proper Prisma inferred types for `entries`/`materialEntries` maps, used `as unknown as BodyInit` for the PNG buffer
+  - `src/components/reports/ScopeTable.tsx` — new file: extracted the `ScopeTable` sub-component from GHGReport.tsx
+  - `src/components/reports/GHGReport.tsx` — removed inline `ScopeTable` definition (replaced by import), reduced from 324 → 297 lines (≤300 convention met)
+- **Problems Encountered:** None.
