@@ -170,3 +170,16 @@
   - `docs/features/001-gruenbilanz-full-build/code-review.md` — re-review section appended with approval verdict
 - **Problems Encountered:** None.
 - **Next Steps:** UAT Tester agent should perform user-facing acceptance testing.
+
+### UAT Tester
+- **Date:** 2026-03-24
+- **Summary:** Reviewed the UAT test plan (17 steps) and all existing e2e tests, then wrote comprehensive Playwright TypeScript e2e tests covering every user-facing scenario. Also produced the UAT report and posted a manual verification checklist for the Maintainer.
+- **Artifacts Produced:**
+  - `e2e-tests/dashboard.spec.ts` — 15 tests covering dashboard load, KPI card, charts, audit log, report buttons, German locale, year selector, mobile layout
+  - `e2e-tests/wizard-flow.spec.ts` — 30+ tests covering all 7 wizard screens, sidebar nav, status badges, Heizung/Fuhrpark/Strom/Materialien/Dienstreisen/Abfall forms, OCR stub, mobile layout
+  - `e2e-tests/reports-badge.spec.ts` — 15 tests covering GHG/CSRD PDF API responses, SVG/PNG/HTML badge endpoints, /api/years and /api/entries
+  - `e2e-tests/year-management.spec.ts` — extended with 8 additional tests for seed year display, add year button, API create/delete, German UI text
+  - `docs/features/001-gruenbilanz-full-build/uat-report.md` — complete UAT report with scenario checklist
+  - `docs/features/001-gruenbilanz-full-build/screenshots/` — directory created for CI screenshot capture
+- **Problems Encountered:** Application cannot be started in the agent environment (no Docker daemon, no database). Tests are written to run against `http://localhost:3000` and will execute in CI via the `e2e-tests` workflow job.
+- **Next Steps:** Maintainer should review the PR comment with manual UAT instructions and reply PASS/FAIL. Release Manager can proceed once CI passes and Maintainer responds PASS.
