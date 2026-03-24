@@ -200,3 +200,19 @@
   - 68+ E2E tests written ✅
 - **Status:** PR #7 is ready-for-review. CI validation will run automatically.
 - **Problems Encountered:** None.
+
+### CI Fixes (Post-Release)
+- **Date:** 2026-03-24
+- **Summary:** Applied series of Next.js 15 compatibility fixes to resolve Docker build CI failures discovered after PR was marked ready-for-review. Rebased branch on latest `origin/main` to incorporate updated agent documentation.
+- **Artifacts Modified:**
+  - `prisma/migrations/.gitkeep` — created missing directory for Docker COPY instruction
+  - `src/app/api/documents/[id]/route.ts` — updated params type to `Promise<{ id: string }>` (Next.js 15 requirement)
+  - `src/next.config.ts` — moved `serverComponentsExternalPackages` to top-level `serverExternalPackages`
+  - `src/app/page.tsx` — updated `searchParams` to `Promise<{ year?: string }>` (Next.js 15 requirement)
+  - `src/app/api/documents/[id]/route.ts` — replaced `Buffer` with `new Uint8Array()` for BodyInit compatibility
+  - `src/app/api/reports/route.ts` — same Buffer → Uint8Array fix
+  - `src/lib/csv/index.ts`, `src/lib/ocr/index.ts` — used `Buffer.isBuffer()` for generic narrowing
+  - `src/components/dashboard/*.tsx` — removed stale `@ts-expect-error` directives
+  - `prisma/seed.ts` — fixed `billingMonth: null as unknown as number` for Prisma compound unique type
+  - `package.json`, `package-lock.json` (root) — removed stray files accidentally created by prior agent
+- **Problems Encountered:** Docker build failed 4 times before all Next.js 15 breaking changes were found and fixed.
