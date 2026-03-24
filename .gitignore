@@ -46,4 +46,3 @@ src/node_modules/
 src/.next/
 src/next-env.d.ts
 src/tsconfig.tsbuildinfo
-src/package-lock.json
