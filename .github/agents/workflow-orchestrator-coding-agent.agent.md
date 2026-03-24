@@ -212,7 +212,7 @@ For each stage:
 - After Developer completes rework, return to Code Reviewer
 
 **UAT Failures:**
-- If UAT Tester finds rendering issues, delegate to Developer for fixes
+- If UAT Tester finds any failures (broken use cases, missing data, wrong behavior, UI defects) — whether from automated E2E tests or Maintainer's FAIL comment — delegate to Developer for fixes
 - Provide specific UAT feedback to Developer
 - After fixes, return to UAT Tester
 
