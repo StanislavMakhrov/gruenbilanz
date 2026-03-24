@@ -27,17 +27,8 @@ For well-defined features or bugs, use the **Workflow Orchestrator** agent to au
 **How It Works (Technical)**:
 The routing is controlled by `.github/copilot-instructions.md`. That file contains an explicit rule: when the coding agent session is triggered from a GitHub issue assignment, it **must** load `.github/agents/workflow-orchestrator-coding-agent.agent.md` and act as the Workflow Orchestrator rather than implementing directly. Without this rule, the coding agent would bypass the pipeline and implement directly as a developer.
 
-**Bypassing the Orchestrator (known failure modes)**:
-Two bypass patterns were observed, both exploiting the old "Exception" clause that allowed skipping pipeline stages:
-
-1. **"Initial plan" commit misread as prior work** — GitHub automatically creates an "Initial plan" commit on `copilot/*` when a session starts. The agent misread this as evidence of a prior orchestrator session.
-
-2. **Feature docs from `main` misread as branch artifacts** — Feature docs merged to `main` from a previous pipeline run are visible in the working tree of a new session. The agent found them and bypassed the orchestrator.
-
-Both patterns are now eliminated by removing the Exception clause entirely. Issue assignment always triggers the full orchestrator pipeline — the orchestrator itself observes what artifacts already exist and delegates only to the remaining agents.
-
-**Work Item Folder on `copilot/*` branches**:
-On standard branches (`feature/NNN-*`, `fix/NNN-*`, `workflow/NNN-*`), agents derive the work item folder from the branch name. On `copilot/*` branches, there is no NNN in the branch name. The orchestrator resolves the work item folder (by delegating `scripts/next-issue-number.sh` to the entry-point agent) and passes it explicitly to every subsequent agent. All agent definitions accept an orchestrator-provided folder path as their first resolution step.
+**Bypassing the Orchestrator (known failure mode)**:
+When GitHub starts a coding agent session it automatically creates an "Initial plan" commit on the `copilot/*` branch. A previous version of the Exception clause in `copilot-instructions.md` allowed bypass when "prior commits" existed — the agent misread the automatic commit as evidence of a prior orchestrator session and implemented the feature directly. The clause was tightened to require actual orchestrator artifacts (`docs/features/<N>-*/specification.md` or `docs/adr/*.md`) before the exception can apply.
 
 **Workflow**:
 - The orchestrator **never asks clarifying questions** - it immediately delegates to the appropriate entry point agent (Requirements Engineer for features, Issue Analyst for bugs)
@@ -55,20 +46,6 @@ On standard branches (`feature/NNN-*`, `fix/NNN-*`, `workflow/NNN-*`), agents de
 - Exploratory analysis or design work (use individual agents directly)
 - Single-agent tasks (just use that agent)
 - Highly interactive work requiring maintainer decisions at each step
-
-### Session-Triggered Coding Agent (Interactive)
-
-When a Maintainer starts a coding agent session directly (not from an issue assignment) and types a prompt:
-
-- The agent works **directly on the task** described in the prompt — no orchestrator pipeline.
-- The agent uses `report_progress` to push commits, but does **NOT** create a PR. The Maintainer clicks "Create PR" in the GitHub UI when satisfied.
-- The Maintainer is actively present in the session and can guide the work, so the full orchestation pipeline (Requirements Engineer → Architect → …) is unnecessary.
-- The agent detects this context by the absence of a GitHub issue reference in the session.
-
-**Best for**:
-- Quick tasks, refactors, or exploratory changes where the Maintainer is actively guiding
-- Work that doesn't warrant the full pipeline
-- Iterating on code with real-time Maintainer feedback
 
 **PR Validation and draft PRs**:
 The `PR Validation` pipeline only runs on **ready (non-draft) PRs**. When a coding agent pushes commits to a draft PR, the `synchronize` event triggers the workflow but all jobs are intentionally skipped — this is expected and the "skipped" run in the Actions history is not a failure. The pipeline runs for real only when `scripts/pr-github.sh mark-ready` converts the draft PR to ready-for-review (firing the `ready_for_review` event). This design prevents wasted CI resources on intermediate commits during development.
@@ -88,10 +65,9 @@ All agents exist in two variants optimized for their execution environment:
 - **File naming**: Standard name (e.g., `developer.agent.md`)
 
 ### Coding Agents (GitHub Cloud)
-- **Usage**: Automatically used when GitHub assigns issues to `@copilot`, when running as PR coding agent, or when a Maintainer starts a coding agent session
+- **Usage**: Automatically used when GitHub assigns issues to `@copilot` or when running as PR coding agent
 - **Tools**: No explicit tool list (defaults to all available tools in cloud environment)
 - **Behavior**: Autonomous operation, may ask multiple questions via comments, relies on CI/CD for validation
-- **PR creation**: Issue-triggered sessions → agent creates the PR; session-triggered sessions → Maintainer creates the PR from the UI
 - **File naming**: Name with ` (coding agent)` suffix (e.g., `developer-coding-agent.agent.md`)
 
 The workflow diagram and agent descriptions below refer to the conceptual agent roles, not the specific variants. Both variants follow the same workflow patterns and handoff relationships.
@@ -522,17 +498,6 @@ The first agent in the workflow creates `work-protocol.md` using this template:
 **Branch:** `<type>/NNN-<slug>`
 **Workflow Type:** Feature / Bug Fix / Workflow
 **Created:** YYYY-MM-DD
-
-## Required Agents
-
-<!-- List required agents for this workflow type. Update Status to ✅ Complete as each agent logs their work below. -->
-<!-- Feature agents: Requirements Engineer, Architect, Quality Engineer, Task Planner, Developer, Technical Writer, Code Reviewer, UAT Tester (if user-facing), Release Manager, Retrospective -->
-<!-- Bug Fix agents: Issue Analyst, Developer, Technical Writer, Code Reviewer, UAT Tester (if needed), Release Manager, Retrospective -->
-<!-- Workflow agents: Workflow Engineer, Release Manager -->
-
-| Agent | Status |
-|-------|--------|
-| <Agent Name> | ⬜ Pending |
 
 ## Agent Work Log
 
