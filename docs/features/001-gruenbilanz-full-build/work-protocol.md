@@ -389,3 +389,22 @@
   - Bug 7: Logo input present; logoPath field in profile response; upload triggers save handler
 - **Problems Encountered:** None. Tests written against component source to ensure correct selectors.
 - **Next Steps:** Maintainer to verify manual UAT checklist and reply PASS/FAIL on PR.
+
+### Developer (UI Redesign — Premium Emerald Theme)
+- **Date:** 2026-03-25
+- **Agent:** Developer
+- **Summary:** Redesigned the GrünBilanz UI from plain white/gray to a premium SaaS look with deep emerald gradients, modern card styling, and improved typography.
+- **Artifacts Produced:**
+  - `src/app/globals.css` — Updated CSS custom properties (richer forest green, tinted background, 0.75rem radius, system-UI font stack)
+  - `src/app/layout.tsx` — Emerald gradient nav (`from-[#064e3b] to-[#065f46]`), white text/icons
+  - `src/app/page.tsx` — Hero gradient header card, gradient CTA button, improved empty state
+  - `src/components/dashboard/KpiCard.tsx` — Full dark emerald gradient card, white text, text-5xl numbers
+  - `src/components/dashboard/ScopeDonut.tsx`, `CategoryBarChart.tsx`, `YearOverYearChart.tsx` — Modern rounded-2xl card style
+  - `src/components/dashboard/BranchenvergleichCard.tsx` — Taller progress bars (h-3), prominent result badge
+  - `src/components/dashboard/CategoryStatusList.tsx` — Emerald tint on completed rows, bordered section headers
+  - `src/components/dashboard/ReportButtons.tsx` — Circular icon badges, GHG report distinguished with green gradient
+  - `src/tailwind.config.ts` — Added explicit emerald palette (50–900)
+  - **Also fixed:** Pre-existing Prisma client type errors (regenerated client, updated imports from `@prisma/client` to `@/types`)
+- **Build Status:** ✅ `npm run build` passes cleanly (only pre-existing ESLint warnings in unrelated files)
+- **Problems Encountered:** Prisma client in node_modules was not generated with actual schema (used `any` types), causing cascading TypeScript errors. Fixed by running `prisma generate` with a fake DATABASE_URL and updating stale `import type { ... } from '@prisma/client'` to `@/types`.
+- **Next Steps:** Code Reviewer to review styling changes; Technical Writer (if needed) to update docs.
