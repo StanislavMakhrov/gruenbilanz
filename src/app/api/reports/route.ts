@@ -3,6 +3,7 @@
  * Must run on Node.js runtime (react-pdf requires full Node.js environment).
  */
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
