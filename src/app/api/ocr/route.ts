@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { extractFromFile } from '@/lib/ocr';
-import type { EmissionCategory, Scope } from '@prisma/client';
+import type { EmissionCategory, Scope } from '@/types';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 

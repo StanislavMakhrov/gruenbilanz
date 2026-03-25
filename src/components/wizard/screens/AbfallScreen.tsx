@@ -18,7 +18,7 @@ import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
 import { useEntries } from '@/components/wizard/useEntries';
 import { saveWizardStatus } from '@/app/wizard/WizardLayoutInner';
 import type { StatusLevel } from '@/components/wizard/StatusBadge';
-import type { EmissionCategory } from '@prisma/client';
+import type { EmissionCategory } from '@/types';
 
 const CATEGORIES = ['ABFALL_RESTMUELL', 'ABFALL_BAUSCHUTT', 'ABFALL_ALTMETALL', 'ABFALL_SONSTIGES'] as const;
 

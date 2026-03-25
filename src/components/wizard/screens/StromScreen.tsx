@@ -18,7 +18,7 @@ import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
 import { useEntries } from '@/components/wizard/useEntries';
 import { saveWizardStatus } from '@/app/wizard/WizardLayoutInner';
 import type { StatusLevel } from '@/components/wizard/StatusBadge';
-import type { EmissionCategory } from '@prisma/client';
+import type { EmissionCategory } from '@/types';
 
 const CATEGORIES = ['STROM', 'FERNWAERME'] as const;
 const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];

@@ -19,7 +19,9 @@
  */
 import { renderToBuffer } from '@react-pdf/renderer';
 import type React from 'react';
-import type { ReportType, CompanyProfile, EmissionEntry, MaterialEntry, ReportingYear } from '@prisma/client';
+import type { CompanyProfile, EmissionEntry, MaterialEntry, ReportingYear } from '@/types';
+/** ReportType — defined locally since Prisma client enums aren't generated in this environment */
+type ReportType = 'GHG_PROTOCOL' | 'CSRD_QUESTIONNAIRE';
 
 /** All data required to render either report type */
 export interface ReportData {

@@ -9,7 +9,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { renderReport } from '@/lib/pdf';
 import { calculateCO2e } from '@/lib/emissions';
-import type { ReportType } from '@prisma/client';
+import type { EmissionEntry, MaterialEntry } from '@/types';
+/** ReportType enum values defined here since Prisma client hasn't generated enums yet */
+type ReportType = 'GHG_PROTOCOL' | 'CSRD_QUESTIONNAIRE';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -23,8 +25,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const [company, year, entries, materialEntries] = await Promise.all([
       prisma.companyProfile.findUniqueOrThrow({ where: { id: 1 } }),
       prisma.reportingYear.findUniqueOrThrow({ where: { id: reportingYearId } }),
-      prisma.emissionEntry.findMany({ where: { reportingYearId } }),
-      prisma.materialEntry.findMany({ where: { reportingYearId } }),
+      prisma.emissionEntry.findMany({ where: { reportingYearId } }) as Promise<EmissionEntry[]>,
+      prisma.materialEntry.findMany({ where: { reportingYearId } }) as Promise<MaterialEntry[]>,
     ]);
 
     // Calculate scope totals

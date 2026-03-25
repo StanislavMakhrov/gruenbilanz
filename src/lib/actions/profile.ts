@@ -6,7 +6,7 @@
  * Writes an AuditLog row for each field changed.
  */
 import { prisma } from '@/lib/prisma';
-import type { Branche } from '@prisma/client';
+import type { Branche } from '@/types';
 import type { ActionResult } from './entries';
 
 export interface SaveCompanyProfileInput {

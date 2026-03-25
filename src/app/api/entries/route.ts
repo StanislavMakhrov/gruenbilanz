@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { saveEntry, deleteEntry } from '@/lib/actions';
 import { prisma } from '@/lib/prisma';
-import type { Scope, EmissionCategory } from '@prisma/client';
+import type { Scope, EmissionCategory } from '@/types';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);

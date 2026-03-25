@@ -5,7 +5,7 @@
  * All mutations write an immutable AuditLog entry in the same transaction.
  */
 import { prisma } from '@/lib/prisma';
-import type { EmissionCategory, InputMethod, Scope } from '@prisma/client';
+import type { EmissionCategory, InputMethod, Scope } from '@/types';
 
 export interface ActionResult {
   success: boolean;

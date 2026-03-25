@@ -10,7 +10,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { saveEntry } from '@/lib/actions';
-import type { Scope, EmissionCategory } from '@prisma/client';
+import type { Scope, EmissionCategory } from '@/types';
 
 export interface EntryValue {
   quantity: number;

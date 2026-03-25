@@ -14,7 +14,7 @@
  */
 import { useState, useRef } from 'react';
 import { Plus, Trash2, FileText } from 'lucide-react';
-import type { Scope } from '@prisma/client';
+import type { Scope } from '@/types';
 
 const MONTHS = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',

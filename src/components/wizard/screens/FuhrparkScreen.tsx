@@ -19,7 +19,7 @@ import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
 import { useEntries } from '@/components/wizard/useEntries';
 import { saveWizardStatus } from '@/app/wizard/WizardLayoutInner';
 import type { StatusLevel } from '@/components/wizard/StatusBadge';
-import type { EmissionCategory } from '@prisma/client';
+import type { EmissionCategory } from '@/types';
 
 const FUEL_CATEGORIES = ['DIESEL_FUHRPARK', 'BENZIN_FUHRPARK'] as const;
 const KM_CATEGORIES = ['PKW_DIESEL_KM', 'PKW_BENZIN_KM', 'TRANSPORTER_KM', 'LKW_KM'] as const;

@@ -18,7 +18,7 @@ import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
 import { useEntries } from '@/components/wizard/useEntries';
 import { saveWizardStatus } from '@/app/wizard/WizardLayoutInner';
 import type { StatusLevel } from '@/components/wizard/StatusBadge';
-import type { EmissionCategory } from '@prisma/client';
+import type { EmissionCategory } from '@/types';
 
 const CATEGORIES = ['GESCHAEFTSREISEN_FLUG', 'GESCHAEFTSREISEN_BAHN', 'PENDLERVERKEHR'] as const;
 

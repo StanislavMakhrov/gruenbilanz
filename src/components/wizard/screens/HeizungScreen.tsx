@@ -7,7 +7,7 @@
  * Bug 8 fix: removed redundant OcrUploadButton and FieldDocumentZone — MultiInvoiceUpload
  * handles both OCR extraction and file evidence in a single interface.
  */
-import type { EmissionCategory } from '@prisma/client';
+import type { EmissionCategory } from '@/types';
 import { toast } from 'sonner';
 import SaveButton from '@/components/wizard/SaveButton';
 import StatusBadge from '@/components/wizard/StatusBadge';

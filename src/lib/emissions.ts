@@ -9,7 +9,7 @@
  *   - STROM → "STROM_MIX" (or "STROM_OEKOSTROM" when isOekostrom=true)
  *   - MaterialCategory.SONSTIGE → "MATERIAL_SONSTIGE"
  */
-import { EmissionCategory, MaterialCategory } from '@prisma/client';
+import { EmissionCategory, MaterialCategory } from '@/types';
 import { FactorNotFoundError, lookupFactor } from './factors';
 
 /**

@@ -6,7 +6,7 @@
  * All mutations write an AuditLog entry.
  */
 import { prisma } from '@/lib/prisma';
-import type { MaterialCategory, InputMethod } from '@prisma/client';
+import type { MaterialCategory, InputMethod } from '@/types';
 import type { ActionResult } from './entries';
 
 export interface SaveMaterialEntryInput {

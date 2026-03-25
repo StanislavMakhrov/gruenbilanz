@@ -13,7 +13,7 @@
  */
 import { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
-import type { Scope } from '@prisma/client';
+import type { Scope } from '@/types';
 
 interface OcrUploadButtonProps {
   /** The EmissionCategory key to extract (e.g. "ERDGAS") */
