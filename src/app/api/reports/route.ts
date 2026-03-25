@@ -78,9 +78,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     });
   } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
     console.error('report generation error:', error);
     return NextResponse.json(
-      { error: 'PDF-Erstellung fehlgeschlagen. Bitte erneut versuchen.' },
+      { error: 'PDF-Erstellung fehlgeschlagen.', detail: msg },
       { status: 500 },
     );
   }
