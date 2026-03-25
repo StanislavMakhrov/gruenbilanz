@@ -1,3 +1,11 @@
+// 'use client' forces Next.js to compile this component with the standard React JSX
+// runtime (react/jsx-runtime) instead of the RSC runtime (react-server/jsx-runtime).
+// The RSC runtime creates elements with a different internal $$typeof value that the
+// @react-pdf/reconciler does not recognise, causing React Error #31 at render time.
+// This component is still called server-side via renderToBuffer — 'use client' only
+// affects the JSX transform used at build time, not where the function is executed.
+'use client';
+
 /**
  * GHG Protocol PDF Report component for GrünBilanz.
  *
