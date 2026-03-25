@@ -242,3 +242,30 @@
   - `src/package-lock.json` — updated lockfile
 - **Verification:** `npm run build` clean, `npm test` 27/27 pass, PDF buffers generated correctly with tsx (GHGReport ≈ 6 KB, CSRDQuestionnaire ≈ 7 KB). No CVEs found in v4.3.2 (GitHub Advisory Database). CodeQL: 0 alerts. Code Review: no comments.
 - **Problems Encountered:** Attempting to add `react` to `serverExternalPackages` as an alternative fix failed — React 19's reconciler explicitly rejects React 18 elements ("A React Element from an older version of React was rendered"), so the only correct fix is upgrading react-pdf itself.
+
+### E2E Fix — PDF 500 Error: RSC React Missing __SECRET_INTERNALS (2025-01-XX)
+- **Date:** 2025-01-XX
+- **Agent:** Developer
+- **Summary:** Fixed the persistent `POST /api/reports` 500 error causing 3 E2E tests to fail.
+- **Root Cause:**
+  The webpack bundle for Next.js 15 server builds uses the RSC-vendored React
+  (`next/dist/compiled/next-server/app-page.runtime.prod.js → vendored["react-rsc"].React`)
+  as the `react` module (module 61120). When `react/jsx-runtime.js` (from node_modules/react)
+  is aliased into the PDF component webpack bundle, it accesses
+  `r.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner` at module
+  **initialisation time**. The RSC-vendored React does NOT expose `__SECRET_INTERNALS`,
+  causing `TypeError: Cannot read properties of undefined (reading 'ReactCurrentOwner')`.
+  This error fires when the PDF chunks (599/230) are lazily loaded at request time,
+  returning a 500 on every `POST /api/reports` call.
+- **Artifacts Modified:**
+  - `src/lib/pdf-jsx-runtime.js` (NEW) — self-contained JSX runtime that creates
+    standard React elements (`$$typeof: Symbol.for('react.element')`) without accessing
+    React internals. `_owner` is always `null`, which `@react-pdf/reconciler` accepts.
+  - `src/next.config.ts` — updated webpack alias rule to point `react/jsx-runtime$` and
+    `react/jsx-dev-runtime$` to the new custom runtime (not the real `react/jsx-runtime`).
+- **Verification:** Build clean, 27/27 unit tests pass. Compiled chunks 599/230 no longer
+  contain `__SECRET_INTERNALS` or `ReactCurrentOwner` references.
+- **Problems Encountered:**
+  Previous fix (aliasing to real `react/jsx-runtime`) appeared correct but still triggered
+  the crash because the real `react/jsx-runtime.js` internally requires the RSC React
+  for `ReactCurrentOwner`, bringing the same problem back indirectly.
