@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import { createRequire } from 'module';
+import path from 'path';
 
 // Use createRequire so module resolution works from this config file's directory.
 // require.resolve() finds the canonical path regardless of package manager layout
@@ -14,23 +15,27 @@ const nextConfig: NextConfig = {
   webpack(config, { isServer }) {
     if (isServer) {
       // PDF report components (GHGReport, CSRDQuestionnaire, ScopeTable) are compiled
-      // as React Server Components by Next.js, which aliases 'react/jsx-runtime' to the
-      // RSC bundled version (vendored["react-rsc"].ReactJsxRuntime). The RSC JSX runtime
-      // produces elements with $$typeof = Symbol(react.transitional.element), which
-      // @react-pdf/reconciler does not recognise — it only handles standard React elements
-      // (Symbol(react.element)), causing React Error #31 inside renderToBuffer.
+      // as React Server Components by Next.js, which uses the RSC-vendored React
+      // (next/dist/compiled/next-server/app-page.runtime.prod.js → vendored["react-rsc"].React).
       //
-      // Fix: add a webpack module rule that overrides the resolve.alias for react and
-      // react/jsx-runtime ONLY for files in components/reports/.
-      // This forces those files to use the real node_modules React (which produces
-      // Symbol(react.element) elements) while all other server code continues to use the
-      // RSC-vendored React required for correct Server Component rendering.
+      // The standard `react/jsx-runtime.js` accesses React internals at module load time:
+      //   r.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentOwner
+      // The RSC-vendored React does NOT expose __SECRET_INTERNALS, so this throws
+      // TypeError at request time when the PDF chunks are loaded, causing a 500.
       //
-      // Note: this rule must be pushed AFTER Next.js configures its RSC aliases so it
+      // Fix: alias 'react/jsx-runtime' for PDF component files to a custom runtime
+      // (lib/pdf-jsx-runtime.js) that creates standard React elements WITHOUT touching
+      // React internals. The custom runtime produces elements with
+      //   $$typeof: Symbol.for("react.element")
+      // which @react-pdf/reconciler accepts correctly.
+      //
+      // Note: this rule is pushed AFTER Next.js configures its RSC aliases so it
       // takes precedence for files matching the test pattern.
 
-      const realReact = require.resolve('react');
-      const realReactJsx = require.resolve('react/jsx-runtime');
+      const pdfJsxRuntime = path.resolve(
+        path.dirname(require.resolve('./package.json')),
+        'lib/pdf-jsx-runtime.js',
+      );
 
       config.module.rules.push({
         // Match the PDF component source files directly, regardless of who imports them.
@@ -40,8 +45,12 @@ const nextConfig: NextConfig = {
         test: /components[/\\]reports[/\\].*\.(tsx?|js)$/,
         resolve: {
           alias: {
-            react$: realReact,
-            'react/jsx-runtime$': realReactJsx,
+            // Replace the standard react/jsx-runtime with our internal-free version.
+            // The custom runtime does not access React.__SECRET_INTERNALS, avoiding
+            // the TypeError thrown when the RSC-vendored React is used as the React
+            // instance in the webpack server bundle.
+            'react/jsx-runtime$': pdfJsxRuntime,
+            'react/jsx-dev-runtime$': pdfJsxRuntime,
           },
         },
       });
