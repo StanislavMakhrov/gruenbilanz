@@ -10,12 +10,15 @@ import { formatDateTime } from '@/lib/utils';
 
 interface ChangeLogEntry {
   id: number;
+  entityType: string;
   fieldName: string | null;
   oldValue: string | null;
   newValue: string | null;
   inputMethod: string;
   createdAt: string;
   action: string;
+  /** JSON string: {"category":"ERDGAS",...} — set by saveEntry for EmissionEntry logs */
+  metadata: string | null;
 }
 
 interface ScreenChangeLogProps {
@@ -55,16 +58,27 @@ export default function ScreenChangeLog({
     fetch(`/api/audit?${params}`)
       .then((r) => r.json())
       .then((data: ChangeLogEntry[]) => {
-        // Filter to categories relevant to this screen
+        // Filter to categories relevant to this screen.
+        // AuditLog entries store the EmissionCategory in metadata.category
+        // (set by saveEntry in lib/actions/entries.ts). CompanyProfile entries
+        // have no metadata but are shown when categories list is empty (profile screen).
         const catSet = new Set(categories);
         const filtered = data.filter((l) => {
-          if (!l.fieldName) return false;
-          try {
-            // metadata contains the category — fall back to fieldName scan
-            return catSet.has(l.fieldName) || catSet.size === 0;
-          } catch {
-            return false;
+          if (catSet.size === 0) {
+            // For screens without specific categories (e.g. Firmenprofil),
+            // show CompanyProfile entries
+            return l.entityType === 'CompanyProfile';
           }
+          // Parse metadata JSON to find the category stored at save time
+          if (l.metadata) {
+            try {
+              const meta = JSON.parse(l.metadata) as { category?: string };
+              return meta.category ? catSet.has(meta.category) : false;
+            } catch {
+              return false;
+            }
+          }
+          return false;
         });
         setLogs(filtered.slice(0, 5));
       })
@@ -89,7 +103,14 @@ export default function ScreenChangeLog({
       {isOpen && (
         <div className="border-t border-border px-5 py-4">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground animate-pulse">Laden…</p>
+            <div className="space-y-2 animate-pulse" aria-busy="true" aria-label="Lädt…">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex gap-3">
+                  <div className="h-3 w-24 rounded bg-muted" />
+                  <div className="h-3 flex-1 rounded bg-muted" />
+                </div>
+              ))}
+            </div>
           ) : logs.length === 0 ? (
             <p className="text-sm text-muted-foreground">Noch keine Änderungen erfasst.</p>
           ) : (

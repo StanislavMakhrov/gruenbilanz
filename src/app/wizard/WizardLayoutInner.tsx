@@ -8,10 +8,12 @@
  *
  * Status is computed client-side from localStorage to avoid server round-trips.
  * The actual status badge data is refreshed when screens save new data.
+ * Uses lucide-react icons for visual consistency (Bug 2 fix).
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { Menu, X, ArrowLeft } from 'lucide-react';
 import StatusBadge from '@/components/wizard/StatusBadge';
 import type { StatusLevel } from '@/components/wizard/StatusBadge';
 
@@ -127,7 +129,7 @@ export default function WizardLayoutInner({ children }: { children: React.ReactN
             href="/"
             className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
           >
-            ← Zum Dashboard
+          <ArrowLeft className="h-3 w-3" aria-hidden="true" /> Zum Dashboard
           </Link>
         </div>
       </aside>
@@ -143,7 +145,7 @@ export default function WizardLayoutInner({ children }: { children: React.ReactN
           className="p-2 rounded-md hover:bg-muted min-h-[44px]"
           aria-label="Menü öffnen"
         >
-          {isMobileOpen ? '✕' : '☰'}
+          {isMobileOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
         </button>
       </div>
 

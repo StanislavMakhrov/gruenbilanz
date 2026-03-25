@@ -71,6 +71,8 @@ export async function saveEntry(input: SaveEntryInput): Promise<ActionResult> {
             inputMethod,
             documentId: documentId ?? null,
             emissionEntryId: existing.id,
+            // Store category in metadata so ScreenChangeLog can filter by screen
+            metadata: JSON.stringify({ category }),
           },
         }),
       ]);
@@ -103,6 +105,8 @@ export async function saveEntry(input: SaveEntryInput): Promise<ActionResult> {
         inputMethod,
         documentId: documentId ?? null,
         emissionEntryId: created.id,
+        // Store category in metadata so ScreenChangeLog can filter by screen
+        metadata: JSON.stringify({ category }),
       },
     });
 

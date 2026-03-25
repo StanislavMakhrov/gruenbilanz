@@ -13,6 +13,7 @@ import PlausibilityWarning from '@/components/wizard/PlausibilityWarning';
 import FieldDocumentZone from '@/components/wizard/FieldDocumentZone';
 import OcrUploadButton from '@/components/wizard/OcrUploadButton';
 import CsvImportButton from '@/components/wizard/CsvImportButton';
+import MultiInvoiceUpload from '@/components/wizard/MultiInvoiceUpload';
 import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
 import { useEntries } from '@/components/wizard/useEntries';
 import { saveWizardStatus } from '@/app/wizard/WizardLayoutInner';
@@ -109,7 +110,7 @@ export default function StromScreen({ reportingYearId, year }: StromScreenProps)
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-sm font-medium" htmlFor="STROM">Strom</label>
-            <OcrUploadButton category="STROM" onResult={(v) => setValue('STROM', { quantity: v })} />
+            <OcrUploadButton category="STROM" reportingYearId={reportingYearId} scope="SCOPE2" onResult={(v) => setValue('STROM', { quantity: v })} />
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -127,6 +128,17 @@ export default function StromScreen({ reportingYearId, year }: StromScreenProps)
           </div>
           <PlausibilityWarning category="STROM" value={values['STROM']?.quantity || null} />
           <FieldDocumentZone fieldKey={`STROM_${year}`} year={year} />
+
+          {/* Multi-invoice upload: monthly Strom bills (Bug 5 fix) */}
+          <MultiInvoiceUpload
+            category="STROM"
+            reportingYearId={reportingYearId}
+            scope="SCOPE2"
+            label="Weitere Belege (mehrere Abschlüsse)"
+            onTotalChange={(total) => {
+              if (total > 0) setValue('STROM', { quantity: total });
+            }}
+          />
 
           {/* Ökostrom checkbox */}
           <label className="flex items-center gap-2 mt-3 cursor-pointer min-h-[44px]">
@@ -162,7 +174,7 @@ export default function StromScreen({ reportingYearId, year }: StromScreenProps)
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-sm font-medium" htmlFor="FERNWAERME">Fernwärme</label>
-            <OcrUploadButton category="FERNWAERME" onResult={(v) => setValue('FERNWAERME', { quantity: v })} />
+            <OcrUploadButton category="FERNWAERME" reportingYearId={reportingYearId} scope="SCOPE2" onResult={(v) => setValue('FERNWAERME', { quantity: v })} />
           </div>
           <div className="flex items-center gap-2">
             <input

@@ -32,6 +32,8 @@ interface ProfileState {
   standort: string;
   reportingBoundaryNotes: string;
   exclusions: string;
+  /** Currently saved logo as data-URL or file path; null when no logo exists */
+  logoPath: string | null;
 }
 
 interface FirmenprofilScreenProps {
@@ -46,18 +48,36 @@ export default function FirmenprofilScreen({ reportingYearId }: FirmenprofilScre
     standort: '',
     reportingBoundaryNotes: '',
     exclusions: '',
+    logoPath: null,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<StatusLevel>('nicht_erfasst');
 
-  // Load existing profile on mount
+  // Load existing profile on mount from GET /api/profile
   useEffect(() => {
-    fetch('/api/entries?type=profile')
-      .catch(() => null)
-      .then(() => {
-        // Profile is loaded separately since there is no /api/profile route.
-        // We rely on the initial page state being empty and the user filling it in.
-      });
+    fetch('/api/profile')
+      .then((r) => r.json())
+      .then((data: {
+        firmenname?: string;
+        branche?: Branche;
+        mitarbeiter?: number;
+        standort?: string;
+        reportingBoundaryNotes?: string | null;
+        exclusions?: string | null;
+        logoPath?: string | null;
+      } | null) => {
+        if (!data) return; // No profile yet — keep empty form defaults
+        setForm({
+          firmenname: data.firmenname ?? '',
+          branche: (data.branche as Branche) ?? 'ELEKTROHANDWERK',
+          mitarbeiter: data.mitarbeiter ? String(data.mitarbeiter) : '',
+          standort: data.standort ?? '',
+          reportingBoundaryNotes: data.reportingBoundaryNotes ?? '',
+          exclusions: data.exclusions ?? '',
+          logoPath: data.logoPath ?? null,
+        });
+      })
+      .catch(() => null); // Silently ignore network errors (e.g. DB unavailable during dev)
   }, []);
 
   const computeStatus = (f: ProfileState): StatusLevel => {
@@ -87,12 +107,31 @@ export default function FirmenprofilScreen({ reportingYearId }: FirmenprofilScre
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Client-side validation to avoid a round-trip for obvious errors
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      toast.error('Logo muss im JPEG- oder PNG-Format vorliegen.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Logo darf nicht größer als 10 MB sein.');
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = async () => {
-      const base64 = (reader.result as string).split(',')[1];
+      const dataUrl = reader.result as string;
+      const base64 = dataUrl.split(',')[1];
       const result = await saveCompanyProfile({ logoBase64: base64, logoMimeType: file.type });
-      if (result.success) toast.success('Logo gespeichert.');
-      else toast.error(result.error ?? 'Logo konnte nicht gespeichert werden.');
+      if (result.success) {
+        // Update logoPath in form state so the preview renders immediately
+        setForm((prev) => ({ ...prev, logoPath: dataUrl }));
+        toast.success('Logo gespeichert.');
+      } else {
+        toast.error(result.error ?? 'Logo konnte nicht gespeichert werden.');
+      }
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -204,6 +243,16 @@ export default function FirmenprofilScreen({ reportingYearId }: FirmenprofilScre
           <label className="block text-sm font-medium mb-1.5" htmlFor="logo">
             Unternehmenslogo (optional)
           </label>
+          {/* Logo preview — shown when a logo has been saved */}
+          {form.logoPath && (
+            <div className="mb-2">
+              <img
+                src={form.logoPath}
+                alt="Gespeichertes Firmenlogo"
+                className="h-16 w-auto rounded border border-border object-contain"
+              />
+            </div>
+          )}
           <input
             id="logo"
             type="file"

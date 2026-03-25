@@ -152,7 +152,7 @@ export default function FuhrparkScreen({ reportingYearId, year }: FuhrparkScreen
             <div key={category} className="mb-5">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-medium" htmlFor={category}>{label}</label>
-                <OcrUploadButton category={category} onResult={(v) => setValue(category, { quantity: v })} />
+                <OcrUploadButton category={category} reportingYearId={reportingYearId} scope="SCOPE1" onResult={(v) => setValue(category, { quantity: v })} />
               </div>
               <div className="flex items-center gap-2">
                 <input

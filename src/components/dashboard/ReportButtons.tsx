@@ -1,14 +1,15 @@
 'use client';
 
 /**
- * ReportButtons — triggers PDF report generation via POST /api/reports.
+ * ReportButtons — triggers PDF report generation and badge downloads.
  * Three buttons: GHG Protocol report, CSRD questionnaire, and sustainability badge.
+ * - GHG_PROTOCOL and CSRD_QUESTIONNAIRE: POST /api/reports → PDF download
+ * - BADGE: GET /api/badge → SVG badge download (dedicated badge API)
  * Shows a loading spinner during generation and handles errors gracefully.
- * The CSRD questionnaire and badge are labelled as "Demo" since the API
- * currently generates a GHG PDF for all types.
  */
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { FileText, Award, ClipboardList } from 'lucide-react';
 
 interface ReportButtonsProps {
   reportingYearId: number;
@@ -16,32 +17,33 @@ interface ReportButtonsProps {
 
 type ReportType = 'GHG_PROTOCOL' | 'CSRD_QUESTIONNAIRE' | 'BADGE';
 
-const REPORT_CONFIGS: { type: ReportType; label: string; description: string }[] = [
+const REPORT_CONFIGS: { type: ReportType; label: string; description: string; Icon: React.ElementType }[] = [
   {
     type: 'GHG_PROTOCOL',
     label: 'GHG-Bericht erstellen',
     description: 'GHG Protocol konformer PDF-Bericht',
+    Icon: FileText,
   },
   {
     type: 'CSRD_QUESTIONNAIRE',
     label: 'CSRD-Fragebogen',
     description: 'CSRD-Berichtsfragebogen (Demo)',
+    Icon: ClipboardList,
   },
   {
     type: 'BADGE',
     label: 'Nachhaltigkeits-Badge',
-    description: 'Digitales Badge für Ihre Website (Demo)',
+    description: 'Digitales Badge für Ihre Website',
+    Icon: Award,
   },
 ];
 
-async function downloadReport(reportingYearId: number, type: ReportType): Promise<void> {
-  // BADGE is a demo — same endpoint, different label
-  const apiType = type === 'BADGE' ? 'GHG_PROTOCOL' : type;
-
+/** Downloads a PDF report via POST /api/reports for GHG_PROTOCOL or CSRD_QUESTIONNAIRE */
+async function downloadReport(reportingYearId: number, type: 'GHG_PROTOCOL' | 'CSRD_QUESTIONNAIRE'): Promise<void> {
   const response = await fetch('/api/reports', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reportingYearId, type: apiType }),
+    body: JSON.stringify({ reportingYearId, type }),
   });
 
   if (!response.ok) {
@@ -63,14 +65,45 @@ async function downloadReport(reportingYearId: number, type: ReportType): Promis
   URL.revokeObjectURL(url);
 }
 
+/**
+ * Downloads the sustainability badge SVG via GET /api/badge.
+ * Uses the dedicated badge API which computes live CO₂e data and returns SVG.
+ */
+async function downloadBadge(reportingYearId: number): Promise<void> {
+  // Pass reportingYearId as year hint — the badge API resolves the year from reportingYear.year
+  const response = await fetch(`/api/badge?format=svg&reportingYearId=${reportingYearId}`);
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? 'Badge konnte nicht erstellt werden');
+  }
+
+  const svgText = await response.text();
+  const blob = new Blob([svgText], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'GruenBilanz_Badge.svg';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export default function ReportButtons({ reportingYearId }: ReportButtonsProps) {
   const [loading, setLoading] = useState<ReportType | null>(null);
 
   const handleGenerate = async (type: ReportType) => {
     setLoading(type);
     try {
-      await downloadReport(reportingYearId, type);
-      toast.success('Bericht wurde erfolgreich erstellt.');
+      if (type === 'BADGE') {
+        // Badge uses the dedicated GET /api/badge route, not the PDF reports route
+        await downloadBadge(reportingYearId);
+        toast.success('Badge wurde erfolgreich heruntergeladen.');
+      } else {
+        await downloadReport(reportingYearId, type);
+        toast.success('Bericht wurde erfolgreich erstellt.');
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Bericht konnte nicht erstellt werden.';
       toast.error(message);
@@ -83,7 +116,7 @@ export default function ReportButtons({ reportingYearId }: ReportButtonsProps) {
     <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
       <h3 className="text-sm font-medium text-muted-foreground mb-4">Berichte & Nachweise</h3>
       <div className="flex flex-col sm:flex-row gap-3">
-        {REPORT_CONFIGS.map(({ type, label, description }) => (
+        {REPORT_CONFIGS.map(({ type, label, description, Icon }) => (
           <button
             key={type}
             type="button"
@@ -92,9 +125,10 @@ export default function ReportButtons({ reportingYearId }: ReportButtonsProps) {
             className="flex-1 flex flex-col items-center justify-center gap-1 px-4 py-4 rounded-lg border border-border hover:border-primary hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[44px] text-center"
           >
             {loading === type ? (
-              <span className="text-sm text-muted-foreground animate-pulse">Erstelle Bericht…</span>
+              <span className="text-sm text-muted-foreground animate-pulse">Erstelle…</span>
             ) : (
               <>
+                <Icon className="h-5 w-5 text-primary mb-0.5" aria-hidden="true" />
                 <span className="text-sm font-medium text-foreground">{label}</span>
                 <span className="text-xs text-muted-foreground">{description}</span>
               </>

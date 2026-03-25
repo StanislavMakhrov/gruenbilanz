@@ -115,6 +115,8 @@ export default function DienstreisenScreen({ reportingYearId, year }: Dienstreis
               <label className="text-sm font-medium" htmlFor={category}>{label}</label>
               <OcrUploadButton
                 category={category}
+                reportingYearId={reportingYearId}
+                scope="SCOPE3"
                 onResult={(v) => setValue(category, { quantity: v })}
               />
             </div>

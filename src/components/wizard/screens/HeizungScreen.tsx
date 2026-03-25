@@ -13,6 +13,7 @@ import PlausibilityWarning from '@/components/wizard/PlausibilityWarning';
 import FieldDocumentZone from '@/components/wizard/FieldDocumentZone';
 import OcrUploadButton from '@/components/wizard/OcrUploadButton';
 import CsvImportButton from '@/components/wizard/CsvImportButton';
+import MultiInvoiceUpload from '@/components/wizard/MultiInvoiceUpload';
 import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
 import { useEntries } from '@/components/wizard/useEntries';
 import { saveWizardStatus } from '@/app/wizard/WizardLayoutInner';
@@ -114,6 +115,8 @@ export default function HeizungScreen({ reportingYearId, year }: HeizungScreenPr
                   </label>
                   <OcrUploadButton
                     category={category}
+                    reportingYearId={reportingYearId}
+                    scope="SCOPE1"
                     onResult={(v) => handleOcr(category, v)}
                   />
                 </div>
@@ -142,6 +145,16 @@ export default function HeizungScreen({ reportingYearId, year }: HeizungScreenPr
             <FieldDocumentZone
               fieldKey={`${category}_${year}`}
               year={year}
+            />
+
+            {/* Multi-invoice support: upload additional monthly invoices for this category */}
+            <MultiInvoiceUpload
+              category={category}
+              reportingYearId={reportingYearId}
+              scope="SCOPE1"
+              onTotalChange={(total) => {
+                if (total > 0) setValue(category, { quantity: total });
+              }}
             />
           </div>
         ))}

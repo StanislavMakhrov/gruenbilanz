@@ -2,34 +2,50 @@
 
 /**
  * OcrUploadButton — "Rechnung hochladen" button.
- * On file select: calls /api/ocr with the file and category, shows a 1–2 s spinner
- * (matching the OCR stub delay), pre-fills the target field with the result value,
- * and shows a yellow "OCR-Vorschau (Demo)" banner prompting the user to verify.
- * The banner reinforces that the value was machine-extracted and needs review.
+ * On file select: calls /api/ocr with the file, category, reportingYearId, and scope,
+ * shows a 1–2 s spinner (matching the OCR stub delay), pre-fills the target field
+ * with the result value, and shows a yellow "OCR-Vorschau (Demo)" banner prompting
+ * the user to verify. The banner reinforces that the value was machine-extracted
+ * and needs review.
+ *
+ * Requires reportingYearId and scope so the /api/ocr route can persist the
+ * StagingEntry with the correct year and GHG scope reference.
  */
 import { useRef, useState } from 'react';
+import { Upload } from 'lucide-react';
+import type { Scope } from '@prisma/client';
 
 interface OcrUploadButtonProps {
   /** The EmissionCategory key to extract (e.g. "ERDGAS") */
   category: string;
+  /** The active reporting year DB id — required by /api/ocr */
+  reportingYearId: number | null;
+  /** The GHG scope for this screen — required by /api/ocr */
+  scope: Scope;
   /** Callback to pre-fill the parent form field with the OCR result */
   onResult: (value: number) => void;
 }
 
 interface OcrApiResponse {
-  value: number | null;
+  /** Quantity extracted from the invoice — the API returns "quantity", not "value" */
+  quantity: number | null;
   unit: string;
   confidence: number;
   error?: string;
 }
 
-export default function OcrUploadButton({ category, onResult }: OcrUploadButtonProps) {
+export default function OcrUploadButton({ category, reportingYearId, scope, onResult }: OcrUploadButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<{ value: number; unit: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleFile = async (file: File) => {
+    if (!reportingYearId) {
+      setError('Kein Berichtsjahr ausgewählt. Bitte zuerst ein Berichtsjahr anlegen.');
+      return;
+    }
+
     setIsLoading(true);
     setPreview(null);
     setError(null);
@@ -38,6 +54,9 @@ export default function OcrUploadButton({ category, onResult }: OcrUploadButtonP
       const formData = new FormData();
       formData.append('file', file);
       formData.append('category', category);
+      // reportingYearId and scope are required by /api/ocr for StagingEntry persistence
+      formData.append('reportingYearId', String(reportingYearId));
+      formData.append('scope', scope);
 
       const res = await fetch('/api/ocr', { method: 'POST', body: formData });
       const data = (await res.json()) as OcrApiResponse;
@@ -46,9 +65,10 @@ export default function OcrUploadButton({ category, onResult }: OcrUploadButtonP
         throw new Error(data.error ?? 'OCR fehlgeschlagen');
       }
 
-      if (data.value !== null && data.value !== undefined) {
-        setPreview({ value: data.value, unit: data.unit });
-        onResult(data.value);
+      // API returns "quantity" (not "value") — see /api/ocr route.ts
+      if (data.quantity !== null && data.quantity !== undefined) {
+        setPreview({ value: data.quantity, unit: data.unit });
+        onResult(data.quantity);
       } else {
         setError('OCR konnte keinen Wert erkennen. Bitte Wert manuell eingeben.');
       }
@@ -89,7 +109,10 @@ export default function OcrUploadButton({ category, onResult }: OcrUploadButtonP
             OCR läuft…
           </>
         ) : (
-          <>📄 Rechnung hochladen</>
+          <>
+            <Upload className="h-3 w-3" aria-hidden="true" />
+            Rechnung hochladen
+          </>
         )}
       </button>
 

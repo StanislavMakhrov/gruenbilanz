@@ -2,10 +2,12 @@
 
 /**
  * CategoryStatusList — shows all emission categories grouped by scope.
- * Each category shows ✓ (Erfasst) or ○ (Nicht erfasst) based on whether
- * the current year has at least one non-zero entry for that category.
+ * Each category shows a colored indicator (Erfasst / Nicht erfasst) based on
+ * whether the current year has at least one non-zero entry for that category.
  * Helps users quickly see what data is still missing.
+ * Uses lucide-react icons for visual consistency (Bug 2 fix).
  */
+import { CheckCircle2, Circle } from 'lucide-react';
 import { CATEGORY_LABELS, SCOPE_LABELS } from '@/types';
 import type { EmissionCategory, Scope } from '@prisma/client';
 
@@ -32,7 +34,7 @@ export default function CategoryStatusList({ erfassteKategorien }: CategoryStatu
   const scopes: Scope[] = ['SCOPE1', 'SCOPE2', 'SCOPE3'];
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
+    <div className="bg-white rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition-shadow">
       <h3 className="text-sm font-medium text-muted-foreground mb-4">Erfassungsstatus</h3>
       <div className="space-y-6">
         {scopes.map((scope) => {
@@ -53,14 +55,17 @@ export default function CategoryStatusList({ erfassteKategorien }: CategoryStatu
                   const isErfasst = erfassteKategorien.has(cat);
                   return (
                     <li key={cat} className="flex items-center gap-2 text-sm">
-                      <span
-                        className={`text-base leading-none ${
-                          isErfasst ? 'text-green-600' : 'text-muted-foreground'
-                        }`}
-                        aria-label={isErfasst ? 'Erfasst' : 'Nicht erfasst'}
-                      >
-                        {isErfasst ? '✓' : '○'}
-                      </span>
+                      {isErfasst ? (
+                        <CheckCircle2
+                          className="h-4 w-4 text-green-600 shrink-0"
+                          aria-label="Erfasst"
+                        />
+                      ) : (
+                        <Circle
+                          className="h-4 w-4 text-muted-foreground shrink-0"
+                          aria-label="Nicht erfasst"
+                        />
+                      )}
                       <span className={isErfasst ? 'text-foreground' : 'text-muted-foreground'}>
                         {CATEGORY_LABELS[cat]}
                       </span>

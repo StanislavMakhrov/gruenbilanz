@@ -319,3 +319,29 @@
   7. **Bug 7 (Logo upload broken):** Server action is correct but UX is broken: existing logo never loaded (Bug 6 dependency), no logo preview rendered, `logoPath` missing from `ProfileState` type.
 - **Problems Encountered:** None. All root causes identified through static code analysis without requiring the application to run.
 - **Next Steps:** Developer agent should implement fixes for all 7 bugs. Bugs should be tackled in dependency order: Bug 6 → Bug 7 (profile loading before logo preview), Bug 3a → Bug 3b (OCR props before response parsing).
+
+### Developer Agent (Bug Fixes)
+- **Date:** 2026-03-25
+- **Summary:** Fixed all 7 reported bugs. All fixes were implemented, 14 new unit tests written, build passes (zero errors), and 41/41 tests pass.
+- **Artifacts Produced:**
+  - `src/components/dashboard/ReportButtons.tsx` — Bug 1: Added `downloadBadge()` calling `GET /api/badge`; removed `BADGE→GHG_PROTOCOL` remap; added Lucide icons
+  - `src/components/dashboard/KpiCard.tsx` — Bug 2: Added `Leaf`/`Users` icons, hover shadow transition
+  - `src/components/dashboard/CategoryStatusList.tsx` — Bug 2: Replaced emoji with `CheckCircle2`/`Circle` icons, hover shadow
+  - `src/components/wizard/ScreenChangeLog.tsx` — Bug 2+4: Skeleton loading, fixed filter to use `metadata.category`; handles CompanyProfile entries
+  - `src/app/wizard/WizardLayoutInner.tsx` — Bug 2: Added `Menu`/`X`/`ArrowLeft` icons
+  - `src/components/wizard/OcrUploadButton.tsx` — Bug 3: Added `reportingYearId`/`scope` props; fixed `data.value → data.quantity`
+  - `src/components/wizard/screens/HeizungScreen.tsx` — Bug 3+5: Pass new OCR props; wired `MultiInvoiceUpload`
+  - `src/components/wizard/screens/StromScreen.tsx` — Bug 3+5: Pass new OCR props; wired `MultiInvoiceUpload`
+  - `src/components/wizard/screens/FuhrparkScreen.tsx` — Bug 3: Pass new OCR props
+  - `src/components/wizard/screens/DienstreisenScreen.tsx` — Bug 3: Pass new OCR props
+  - `src/components/wizard/screens/AbfallScreen.tsx` — Bug 3: Pass new OCR props
+  - `src/lib/actions/entries.ts` — Bug 4: Populate `metadata: JSON.stringify({ category })` in audit log
+  - `src/app/api/audit/route.ts` — Bug 4: Added `CompanyProfile` to WHERE OR clause
+  - `src/components/wizard/MultiInvoiceUpload.tsx` — Bug 5: New component for multiple invoices per category
+  - `src/app/api/profile/route.ts` — Bug 6+7: New GET /api/profile route
+  - `src/components/wizard/screens/FirmenprofilScreen.tsx` — Bug 6+7: Fixed `useEffect` to call `/api/profile`; added `logoPath` to state; logo preview; client-side file validation
+  - `src/__tests__/bugfixes.test.ts` — 14 new unit tests covering all logic-layer fixes
+- **Test Results:** 41/41 tests passing (27 existing + 14 new), `npm run build` clean with zero errors
+- **Problems Encountered:**
+  - The Prisma generated client was outdated in `src/node_modules/.prisma/client` (pre-existing issue). Ran `npx prisma@5.22 generate --schema ../prisma/schema.prisma` from the `src` directory to regenerate it, which resolved the TypeScript build error in `api/badge/route.ts`.
+  - `lucide-react` needed to be installed (`npm install lucide-react --save`).

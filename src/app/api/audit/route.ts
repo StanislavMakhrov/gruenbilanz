@@ -18,6 +18,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           OR: [
             { emissionEntry: { reportingYearId: parseInt(reportingYearId) } },
             { materialEntry: { reportingYearId: parseInt(reportingYearId) } },
+            // CompanyProfile entries have no year relation — always include them
+            // so ScreenChangeLog on the Firmenprofil screen can display them.
+            { entityType: 'CompanyProfile' },
           ],
         }
       : undefined,
