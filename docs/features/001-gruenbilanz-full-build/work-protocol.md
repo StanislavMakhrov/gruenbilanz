@@ -303,3 +303,19 @@
   reference to RSC React module 61120.
 - **Problems Encountered:** None once root cause confirmed via Node.js inspection of the
   RSC React's createElement output.
+
+### Issue Analyst
+- **Date:** 2026-03-25
+- **Summary:** Investigated all 7 bugs reported by the Maintainer after reviewing the running application. Performed root cause analysis by reading 20+ source files, cross-referencing component interfaces with API contracts, and tracing data flows end-to-end. Identified concrete root causes for each bug, including two bugs with multiple independent root causes (Bug 3: OCR upload, Bug 4: audit log). Created comprehensive issue analysis document.
+- **Artifacts Produced:**
+  - `docs/features/001-gruenbilanz-full-build/issue-analysis.md` — full root cause analysis for all 7 bugs
+- **Key Findings:**
+  1. **Bug 1 (Badge → GHG PDF):** `ReportButtons.tsx` line 39 intentionally maps `BADGE` → `GHG_PROTOCOL`; the `/api/badge` route exists and works but is never called.
+  2. **Bug 2 (UI/UX):** Broad design enhancement needed; no component library used, no icon set, limited interactive states.
+  3. **Bug 3 (OCR not persisted):** Two root causes: (a) `OcrUploadButton` missing `reportingYearId` and `scope` in FormData → always 400; (b) reads `data.value` but API returns `data.quantity` → `onResult` always receives `undefined`.
+  4. **Bug 4 (Audit log empty):** Two root causes: (a) `ScreenChangeLog` filter checks `catSet.has(l.fieldName)` but `fieldName` is always `'quantity'`; (b) `/api/audit` WHERE clause excludes `CompanyProfile` audit entries; `metadata` field never populated with category.
+  5. **Bug 5 (No multi-invoice):** DB schema supports `billingMonth`/`isFinalAnnual`/`providerName`, but `useEntries` hook only stores one entry per category and wizard screens have no multi-row UI.
+  6. **Bug 6 (Firmenprofil empty):** `FirmenprofilScreen` `useEffect` calls wrong endpoint (`/api/entries?type=profile`) and ignores the response entirely; no `/api/profile` GET route exists.
+  7. **Bug 7 (Logo upload broken):** Server action is correct but UX is broken: existing logo never loaded (Bug 6 dependency), no logo preview rendered, `logoPath` missing from `ProfileState` type.
+- **Problems Encountered:** None. All root causes identified through static code analysis without requiring the application to run.
+- **Next Steps:** Developer agent should implement fixes for all 7 bugs. Bugs should be tackled in dependency order: Bug 6 → Bug 7 (profile loading before logo preview), Bug 3a → Bug 3b (OCR props before response parsing).
