@@ -87,9 +87,10 @@ src/app/
     ├── ocr/route.ts                # POST /api/ocr — MIME check → OCR stub → StagingEntry UPSERT
     ├── csv/route.ts                # POST /api/csv — MIME check → CSV stub → headers + 5 rows
     ├── report/route.ts             # POST /api/report — fetch data → renderToBuffer → save → stream
-    ├── badge/route.ts              # GET /api/badge — query total CO₂e → render PNG/SVG/HTML
+    ├── badge/route.ts              # GET /api/badge?format=svg|png|html — query total CO₂e → render chosen format
+    ├── profile/route.ts            # GET /api/profile — return singleton CompanyProfile (id=1) as JSON
     ├── entries/route.ts            # GET/POST/PUT/DELETE /api/entries — EmissionEntry CRUD
-    ├── audit/route.ts              # GET /api/audit — paginated AuditLog query
+    ├── audit/route.ts              # GET /api/audit — paginated AuditLog query (includes CompanyProfile entries)
     ├── documents/
     │   └── [id]/route.ts           # GET /api/documents/[id] — stream UploadedDocument bytes
     └── field-documents/
@@ -123,10 +124,11 @@ All chart components are Client Components (`"use client"`) because Recharts req
 |---|---|---|
 | `WizardNav.tsx` | Client | Side nav: 7 screen links with status badges; progress bar (0–7 complete) |
 | `UploadOCR.tsx` | Client | File input → POST /api/ocr → spinner → yellow preview banner → confirm/reject |
+| `MultiInvoiceUpload.tsx` | Client | Multiple invoices per category; optional `billingMonth` (1–12) and `isFinalAnnual` flag per document; calls POST /api/ocr for each file; notifies parent via `onTotalChange` |
 | `CsvImport.tsx` | Client | File input → POST /api/csv → column mapping table → "Übernehmen" → pre-fill |
 | `FieldDocumentZone.tsx` | Client | Green dashed zone per field; POST /api/field-documents; shows attached filename |
 | `PlausibilityWarning.tsx` | Client | Amber inline banner when value is outside plausibility range for a Handwerksbetrieb |
-| `ScreenChangeLog.tsx` | Client | Collapsible — last 5 `AuditLog` entries for this screen's `EmissionCategory` set |
+| `ScreenChangeLog.tsx` | Client | Collapsible — last 5 `AuditLog` entries for this screen's `EmissionCategory` set; filters by `metadata.category`; also shows `CompanyProfile` change entries |
 
 ##### Screen Components (`src/components/wizard/screens/`)
 
@@ -574,18 +576,25 @@ Simplified questionnaire format for supplier sustainability disclosure. Sections
 
 ### 5.3 Sustainability Badge (`/api/badge`)
 
-Returns three formats in a single response body:
+Returns one format per request, selected via the `?format=` query parameter:
 
-```json
-{
-  "png": "<base64>",
-  "svg": "<svg>...</svg>",
-  "html": "<a href=\"...\"><img ... /></a>"
-}
+| Format | Content-Type | Description |
+|--------|-------------|-------------|
+| `svg` (default) | `image/svg+xml` | SVG badge (green gradient, company name, CO₂e value, year) |
+| `png` | `image/png` | PNG raster image converted from SVG via `sharp` |
+| `html` | `text/html` | HTML embed snippet — `<a>` wrapping `<img src="…?format=svg">` |
+
+Optional `year` query parameter restricts the badge to a specific reporting year (defaults to most recent).
+
+```
+GET /api/badge?format=svg          → SVG response
+GET /api/badge?format=png          → PNG binary
+GET /api/badge?format=html         → HTML embed snippet
+GET /api/badge?format=svg&year=2024
 ```
 
 Badge shows: company name, total CO₂e (t), reporting year, GrünBilanz logo.
-Generated server-side using `@vercel/og` or canvas — no Puppeteer.
+Generated server-side using `sharp` — no Puppeteer.
 
 ### 5.4 PDF Rendering Implementation
 
@@ -774,6 +783,11 @@ export async function saveEntry(input: SaveEntryInput): Promise<ActionResult> {
 
 **Audit log transaction:** Use `prisma.$transaction([upsertEntry, createAuditLog])` to ensure
 both writes succeed or both fail. If the transaction throws, the action returns `{ success: false }`.
+
+`saveEntry` stores `metadata: JSON.stringify({ category })` in the `AuditLog` row so
+`ScreenChangeLog` can filter log entries by the categories belonging to the current wizard screen.
+`saveCompanyProfile` creates an `AuditLog` row with `entityType: "CompanyProfile"`, which is
+included in the `/api/audit` results and displayed in the Firmenprofil screen's change log.
 
 ---
 

@@ -345,3 +345,21 @@
 - **Problems Encountered:**
   - The Prisma generated client was outdated in `src/node_modules/.prisma/client` (pre-existing issue). Ran `npx prisma@5.22 generate --schema ../prisma/schema.prisma` from the `src` directory to regenerate it, which resolved the TypeScript build error in `api/badge/route.ts`.
   - `lucide-react` needed to be installed (`npm install lucide-react --save`).
+
+### Technical Writer (Bug-Fix Documentation Update)
+- **Date:** 2026-03-25
+- **Agent:** Technical Writer
+- **Summary:** Updated `specification.md` and `architecture.md` to accurately reflect all 7 bug fixes implemented by the Developer agent. README.md required no changes (it does not cover these features).
+- **Artifacts Modified:**
+  - `docs/features/001-gruenbilanz-full-build/specification.md`:
+    - Badge API: updated from "returns PNG, SVG, and HTML" to `?format=svg|png|html` query-parameter model; dashboard button now links directly.
+    - Added `GET /api/profile` to the API Routes list with description.
+    - Audit Trail: added `metadata` field (`{ "category" }`) to the AuditLog row description.
+    - Screen 2 (Heizung): documented `MultiInvoiceUpload` panel for Erdgas/Heizöl invoices.
+    - Screen 4 (Strom): documented `MultiInvoiceUpload` panel for electricity invoices.
+  - `docs/features/001-gruenbilanz-full-build/architecture.md`:
+    - File structure: added `profile/route.ts`; updated `badge/route.ts` and `audit/route.ts` comments.
+    - Wizard Components table: added `MultiInvoiceUpload.tsx` row; updated `ScreenChangeLog.tsx` to mention `metadata.category` filter and CompanyProfile entries.
+    - Section 5.3 (Badge): replaced single-JSON-object description with per-format query-parameter table and example URLs; updated tooling note (sharp, not @vercel/og).
+    - Audit log: added paragraph explaining `metadata.category` in `saveEntry` and `CompanyProfile` audit rows in `/api/audit`.
+- **Problems Encountered:** None. All implementation details verified against source files before documenting.
