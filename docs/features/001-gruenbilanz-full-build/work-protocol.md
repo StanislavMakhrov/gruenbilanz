@@ -216,3 +216,16 @@
   - `prisma/seed.ts` — fixed `billingMonth: null as unknown as number` for Prisma compound unique type
   - `package.json`, `package-lock.json` (root) — removed stray files accidentally created by prior agent
 - **Problems Encountered:** Docker build failed 4 times before all Next.js 15 breaking changes were found and fixed.
+
+### CI Fixes — Badge TypeScript Errors & Wizard Navigation Timing
+- **Date:** 2026-03-25
+- **Agent:** Developer
+- **Summary:** Fixed 2 remaining CI failures blocking the PR.
+- **Root Causes:**
+  1. `src/app/api/badge/route.ts` used `EmissionEntry` and `MaterialEntry` as explicit type annotations in `.map()` callbacks without importing them, causing `TS2304: Cannot find name` TypeScript errors → `npm run build` failed inside Docker → Docker image build failed → all e2e tests skipped.
+  2. `e2e-tests/wizard-flow.spec.ts` used `waitForLoadState('networkidle')` then immediately asserted `page.url().toContain('heizung')` — Next.js client-side SPA navigation doesn't update the URL synchronously with networkidle, causing a flaky URL assertion failure.
+- **Artifacts Modified:**
+  - `src/app/api/badge/route.ts` — removed unimported `EmissionEntry`/`MaterialEntry` type annotations from map callbacks; TypeScript infers types correctly from Prisma's `findMany()` return values.
+  - `e2e-tests/wizard-flow.spec.ts` — replaced `waitForLoadState('networkidle')` with `waitForURL('**/heizung**', { timeout: 10000 })` to correctly wait for URL update after SPA navigation.
+- **Verification:** TypeScript clean (0 errors), 27/27 unit tests pass, `next build` clean.
+- **Problems Encountered:** None.
