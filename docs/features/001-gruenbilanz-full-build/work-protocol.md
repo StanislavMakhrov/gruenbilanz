@@ -229,3 +229,16 @@
   - `e2e-tests/wizard-flow.spec.ts` — replaced `waitForLoadState('networkidle')` with `waitForURL('**/heizung**', { timeout: 10000 })` to correctly wait for URL update after SPA navigation.
 - **Verification:** TypeScript clean (0 errors), 27/27 unit tests pass, `next build` clean.
 - **Problems Encountered:** None.
+
+### CI Fixes — PDF Generation 500 Error (React Version Mismatch)
+- **Date:** 2026-03-25
+- **Agent:** Developer
+- **Summary:** Diagnosed and fixed the `/api/reports` 500 error that was the last remaining CI failure. Pulled the CI-built Docker image (`pr-7-b8a2f30`) and reproduced the error by hitting the endpoint live.
+- **Root Cause:**
+  Next.js 15.2.9's internal RSC (React Server Components) runtime bundles **React 19.1.0-canary**, which creates JSX elements with `$$typeof = Symbol.for('react.transitional.element')`. The old `@react-pdf/renderer` v3.4.5 used a React 18-based reconciler that only recognises `Symbol.for('react.element')`. When the reconciler processed the `GHGReport` / `CSRDQuestionnaire` component tree at runtime inside the Docker container, it found React 19 elements it did not recognise and threw **React Error #31** ("Objects are not valid as a React child — found: object with keys {$$typeof, type, key, ref, props}").
+  This mismatch was invisible in local `tsx` runs (where everything uses the same node_modules React 18), but surfaced in the Docker standalone build where Next.js replaced the `react` module with its internal React 19 canary.
+- **Artifacts Modified:**
+  - `src/package.json` — upgraded `@react-pdf/renderer` 3.4.5 → **4.3.2**
+  - `src/package-lock.json` — updated lockfile
+- **Verification:** `npm run build` clean, `npm test` 27/27 pass, PDF buffers generated correctly with tsx (GHGReport ≈ 6 KB, CSRDQuestionnaire ≈ 7 KB). No CVEs found in v4.3.2 (GitHub Advisory Database). CodeQL: 0 alerts. Code Review: no comments.
+- **Problems Encountered:** Attempting to add `react` to `serverExternalPackages` as an alternative fix failed — React 19's reconciler explicitly rejects React 18 elements ("A React Element from an older version of React was rendered"), so the only correct fix is upgrading react-pdf itself.
