@@ -45,9 +45,10 @@ export default function ScreenChangeLog({
   const [logs, setLogs] = useState<ChangeLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch logs lazily when the panel is first opened
+  // Fetch logs lazily when the panel is opened.
+  // Logs are cleared on close so a re-open always fetches fresh data (Bug 4b fix).
   useEffect(() => {
-    if (!isOpen || !reportingYearId || logs.length > 0) return;
+    if (!isOpen || !reportingYearId) return;
 
     setIsLoading(true);
     const params = new URLSearchParams({
@@ -90,7 +91,11 @@ export default function ScreenChangeLog({
     <div className="mt-8 rounded-xl border border-border bg-white overflow-hidden">
       <button
         type="button"
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={() => {
+          // Clear cached logs on close so the next open fetches fresh data (Bug 4b fix)
+          if (isOpen) setLogs([]);
+          setIsOpen((v) => !v);
+        }}
         className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-muted/20 transition-colors"
         aria-expanded={isOpen}
       >

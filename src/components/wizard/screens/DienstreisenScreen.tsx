@@ -5,6 +5,7 @@
  * Covers air travel, rail travel, and commuter mileage (Pendlerverkehr).
  * Pendler-km is the product of employee count × average km/year;
  * a helper hint is shown to explain the calculation.
+ * Bug 5 fix: MultiInvoiceUpload added for multiple travel invoices per category.
  */
 import { toast } from 'sonner';
 import SaveButton from '@/components/wizard/SaveButton';
@@ -13,6 +14,7 @@ import PlausibilityWarning from '@/components/wizard/PlausibilityWarning';
 import FieldDocumentZone from '@/components/wizard/FieldDocumentZone';
 import OcrUploadButton from '@/components/wizard/OcrUploadButton';
 import CsvImportButton from '@/components/wizard/CsvImportButton';
+import MultiInvoiceUpload from '@/components/wizard/MultiInvoiceUpload';
 import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
 import { useEntries } from '@/components/wizard/useEntries';
 import { saveWizardStatus } from '@/app/wizard/WizardLayoutInner';
@@ -142,6 +144,15 @@ export default function DienstreisenScreen({ reportingYearId, year }: Dienstreis
               value={values[category]?.quantity || null}
             />
             <FieldDocumentZone fieldKey={`${category}_${year}`} year={year} />
+            {/* Multi-invoice upload for travel receipts (Bug 5 fix) */}
+            <MultiInvoiceUpload
+              category={category}
+              reportingYearId={reportingYearId}
+              scope="SCOPE3"
+              onTotalChange={(total) => {
+                if (total > 0) setValue(category, { quantity: total });
+              }}
+            />
           </div>
         ))}
 

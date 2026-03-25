@@ -5,6 +5,7 @@
  * Covers Restmüll, Bauschutt, Altmetall (negative factor = recycling credit),
  * and a generic "Sonstiger Abfall" bucket.
  * The Altmetall field includes an explanatory note about the negative factor.
+ * Bug 5 fix: MultiInvoiceUpload added for multiple disposal invoices per category.
  */
 import { toast } from 'sonner';
 import SaveButton from '@/components/wizard/SaveButton';
@@ -13,6 +14,7 @@ import PlausibilityWarning from '@/components/wizard/PlausibilityWarning';
 import FieldDocumentZone from '@/components/wizard/FieldDocumentZone';
 import OcrUploadButton from '@/components/wizard/OcrUploadButton';
 import CsvImportButton from '@/components/wizard/CsvImportButton';
+import MultiInvoiceUpload from '@/components/wizard/MultiInvoiceUpload';
 import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
 import { useEntries } from '@/components/wizard/useEntries';
 import { saveWizardStatus } from '@/app/wizard/WizardLayoutInner';
@@ -135,6 +137,15 @@ export default function AbfallScreen({ reportingYearId, year }: AbfallScreenProp
               value={values[category]?.quantity || null}
             />
             <FieldDocumentZone fieldKey={`${category}_${year}`} year={year} />
+            {/* Multi-invoice upload for waste disposal invoices (Bug 5 fix) */}
+            <MultiInvoiceUpload
+              category={category}
+              reportingYearId={reportingYearId}
+              scope="SCOPE3"
+              onTotalChange={(total) => {
+                if (total > 0) setValue(category, { quantity: total });
+              }}
+            />
           </div>
         ))}
 

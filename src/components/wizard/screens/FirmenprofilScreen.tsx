@@ -51,21 +51,28 @@ export default function FirmenprofilScreen({ reportingYearId }: FirmenprofilScre
     logoPath: null,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [status, setStatus] = useState<StatusLevel>('nicht_erfasst');
 
   // Load existing profile on mount from GET /api/profile
   useEffect(() => {
+    setIsLoadingProfile(true);
     fetch('/api/profile')
-      .then((r) => r.json())
-      .then((data: {
-        firmenname?: string;
-        branche?: Branche;
-        mitarbeiter?: number;
-        standort?: string;
-        reportingBoundaryNotes?: string | null;
-        exclusions?: string | null;
-        logoPath?: string | null;
-      } | null) => {
+      .then(async (r) => {
+        // Check HTTP status before parsing JSON — an error response (e.g. 500)
+        // would otherwise populate form fields with { error: '...' } strings (Bug 6 fix).
+        if (!r.ok) throw new Error(`Profil konnte nicht geladen werden (${r.status})`);
+        return r.json() as Promise<{
+          firmenname?: string;
+          branche?: Branche;
+          mitarbeiter?: number;
+          standort?: string;
+          reportingBoundaryNotes?: string | null;
+          exclusions?: string | null;
+          logoPath?: string | null;
+        } | null>;
+      })
+      .then((data) => {
         if (!data) return; // No profile yet — keep empty form defaults
         setForm({
           firmenname: data.firmenname ?? '',
@@ -77,7 +84,11 @@ export default function FirmenprofilScreen({ reportingYearId }: FirmenprofilScre
           logoPath: data.logoPath ?? null,
         });
       })
-      .catch(() => null); // Silently ignore network errors (e.g. DB unavailable during dev)
+      .catch((err) => {
+        // Log the error so it's visible in DevTools without breaking the form
+        console.error('Firmenprofil load error:', err);
+      })
+      .finally(() => setIsLoadingProfile(false));
   }, []);
 
   const computeStatus = (f: ProfileState): StatusLevel => {
@@ -133,6 +144,11 @@ export default function FirmenprofilScreen({ reportingYearId }: FirmenprofilScre
         toast.error(result.error ?? 'Logo konnte nicht gespeichert werden.');
       }
     };
+    // Handle FileReader errors (e.g. corrupted file, permission issue) — Bug 7 fix
+    reader.onerror = () => {
+      toast.error('Logo konnte nicht gelesen werden. Bitte prüfen Sie die Datei.');
+      e.target.value = '';
+    };
     reader.readAsDataURL(file);
     e.target.value = '';
   };
@@ -174,6 +190,17 @@ export default function FirmenprofilScreen({ reportingYearId }: FirmenprofilScre
         <StatusBadge status={status} />
       </div>
 
+      {/* Skeleton loading state while profile is being fetched (Bug 6 fix) */}
+      {isLoadingProfile ? (
+        <div className="space-y-5 animate-pulse" aria-busy="true" aria-label="Profil wird geladen…">
+          {[...Array(4)].map((_, i) => (
+            <div key={i}>
+              <div className="h-3 w-32 rounded bg-muted mb-2" />
+              <div className="h-10 w-full rounded-md bg-muted" />
+            </div>
+          ))}
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="block text-sm font-medium mb-1.5" htmlFor="firmenname">
@@ -297,6 +324,7 @@ export default function FirmenprofilScreen({ reportingYearId }: FirmenprofilScre
           <SaveButton isSaving={isSaving} />
         </div>
       </form>
+      )}
 
       <ScreenChangeLog screenName="Firmenprofil" categories={[]} reportingYearId={reportingYearId} />
     </div>

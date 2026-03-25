@@ -3,15 +3,15 @@
 /**
  * HeizungScreen — Wizard Screen 2: Scope 1 heating data entry.
  * Covers stationary combustion (Erdgas, Heizöl, Flüssiggas) and refrigerant leakage.
- * Each numeric field has a plausibility warning and a document upload zone.
+ * Each numeric field has a plausibility warning and a multi-invoice upload zone.
+ * Bug 8 fix: removed redundant OcrUploadButton and FieldDocumentZone — MultiInvoiceUpload
+ * handles both OCR extraction and file evidence in a single interface.
  */
 import type { EmissionCategory } from '@prisma/client';
 import { toast } from 'sonner';
 import SaveButton from '@/components/wizard/SaveButton';
 import StatusBadge from '@/components/wizard/StatusBadge';
 import PlausibilityWarning from '@/components/wizard/PlausibilityWarning';
-import FieldDocumentZone from '@/components/wizard/FieldDocumentZone';
-import OcrUploadButton from '@/components/wizard/OcrUploadButton';
 import CsvImportButton from '@/components/wizard/CsvImportButton';
 import MultiInvoiceUpload from '@/components/wizard/MultiInvoiceUpload';
 import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
@@ -75,10 +75,6 @@ export default function HeizungScreen({ reportingYearId, year }: HeizungScreenPr
     }
   };
 
-  const handleOcr = (category: string, value: number) => {
-    setValue(category, { quantity: value });
-  };
-
   const handleCsvImport = (imported: Record<string, number>) => {
     for (const [cat, val] of Object.entries(imported)) {
       setValue(cat, { quantity: val });
@@ -113,12 +109,6 @@ export default function HeizungScreen({ reportingYearId, year }: HeizungScreenPr
                   <label className="text-sm font-medium" htmlFor={category}>
                     {label}
                   </label>
-                  <OcrUploadButton
-                    category={category}
-                    reportingYearId={reportingYearId}
-                    scope="SCOPE1"
-                    onResult={(v) => handleOcr(category, v)}
-                  />
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -142,12 +132,8 @@ export default function HeizungScreen({ reportingYearId, year }: HeizungScreenPr
               category={category}
               value={values[category]?.quantity || null}
             />
-            <FieldDocumentZone
-              fieldKey={`${category}_${year}`}
-              year={year}
-            />
 
-            {/* Multi-invoice support: upload additional monthly invoices for this category */}
+            {/* Single upload interface: replaces OcrUploadButton + FieldDocumentZone (Bug 8 fix) */}
             <MultiInvoiceUpload
               category={category}
               reportingYearId={reportingYearId}

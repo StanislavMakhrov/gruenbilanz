@@ -4,14 +4,14 @@
  * StromScreen — Wizard Screen 4: Scope 2 electricity and district heating.
  * Ökostrom checkbox remaps the emission factor to STROM_OEKOSTROM (near-zero).
  * Optional monthly breakdown: 12 inputs for Jan–Dez collapsible section.
+ * Bug 8 fix: removed redundant OcrUploadButton and FieldDocumentZone — MultiInvoiceUpload
+ * handles both OCR extraction and file evidence in a single interface.
  */
 import { useState } from 'react';
 import { toast } from 'sonner';
 import SaveButton from '@/components/wizard/SaveButton';
 import StatusBadge from '@/components/wizard/StatusBadge';
 import PlausibilityWarning from '@/components/wizard/PlausibilityWarning';
-import FieldDocumentZone from '@/components/wizard/FieldDocumentZone';
-import OcrUploadButton from '@/components/wizard/OcrUploadButton';
 import CsvImportButton from '@/components/wizard/CsvImportButton';
 import MultiInvoiceUpload from '@/components/wizard/MultiInvoiceUpload';
 import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
@@ -110,7 +110,6 @@ export default function StromScreen({ reportingYearId, year }: StromScreenProps)
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-sm font-medium" htmlFor="STROM">Strom</label>
-            <OcrUploadButton category="STROM" reportingYearId={reportingYearId} scope="SCOPE2" onResult={(v) => setValue('STROM', { quantity: v })} />
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -127,14 +126,12 @@ export default function StromScreen({ reportingYearId, year }: StromScreenProps)
             <span className="text-sm text-muted-foreground w-14 shrink-0">kWh</span>
           </div>
           <PlausibilityWarning category="STROM" value={values['STROM']?.quantity || null} />
-          <FieldDocumentZone fieldKey={`STROM_${year}`} year={year} />
 
-          {/* Multi-invoice upload: monthly Strom bills (Bug 5 fix) */}
+          {/* Single upload interface: replaces OcrUploadButton + FieldDocumentZone (Bug 8 fix) */}
           <MultiInvoiceUpload
             category="STROM"
             reportingYearId={reportingYearId}
             scope="SCOPE2"
-            label="Weitere Belege (mehrere Abschlüsse)"
             onTotalChange={(total) => {
               if (total > 0) setValue('STROM', { quantity: total });
             }}
@@ -174,7 +171,6 @@ export default function StromScreen({ reportingYearId, year }: StromScreenProps)
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-sm font-medium" htmlFor="FERNWAERME">Fernwärme</label>
-            <OcrUploadButton category="FERNWAERME" reportingYearId={reportingYearId} scope="SCOPE2" onResult={(v) => setValue('FERNWAERME', { quantity: v })} />
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -191,7 +187,16 @@ export default function StromScreen({ reportingYearId, year }: StromScreenProps)
             <span className="text-sm text-muted-foreground w-14 shrink-0">kWh</span>
           </div>
           <PlausibilityWarning category="FERNWAERME" value={values['FERNWAERME']?.quantity || null} />
-          <FieldDocumentZone fieldKey={`FERNWAERME_${year}`} year={year} />
+
+          {/* Single upload interface for Fernwärme (Bug 8 fix) */}
+          <MultiInvoiceUpload
+            category="FERNWAERME"
+            reportingYearId={reportingYearId}
+            scope="SCOPE2"
+            onTotalChange={(total) => {
+              if (total > 0) setValue('FERNWAERME', { quantity: total });
+            }}
+          />
         </div>
 
         {/* Optional monthly breakdown */}

@@ -7,7 +7,7 @@
  * Calls the OCR stub (lib/ocr/index.ts) in the browser-compatible path,
  * forwarded through /api/ocr for server-side processing.
  */
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface FieldDocumentZoneProps {
@@ -30,6 +30,19 @@ export default function FieldDocumentZone({
   const [hasDocument, setHasDocument] = useState(initialHasDoc);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load existing document from DB on mount (Bug 3 fix).
+  // Without this, the green "Beleg vorhanden" indicator disappears on page reload
+  // even though the document was successfully persisted on the previous visit.
+  useEffect(() => {
+    if (initialHasDoc) return; // Already known to have a doc — no fetch needed
+    fetch(`/api/field-documents?fieldKey=${encodeURIComponent(fieldKey)}&year=${year}`)
+      .then((r) => r.json())
+      .then((doc: { id?: number } | null) => {
+        if (doc?.id) setHasDocument(true);
+      })
+      .catch(() => null); // Silently ignore — DB may be unavailable during dev
+  }, [fieldKey, year, initialHasDoc]);
 
   const handleUpload = async (file: File) => {
     setIsUploading(true);

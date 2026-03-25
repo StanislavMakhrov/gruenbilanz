@@ -97,7 +97,9 @@ export function useEntries(
   const saveCategory = useCallback(async (category: string): Promise<boolean> => {
     if (!reportingYearId) return false;
     const entry = values[category];
-    if (!entry || entry.quantity === 0) return true; // Nothing to save
+    // Allow saving zero — a correction from a non-zero value to 0 must be persisted.
+    // Only skip if the category doesn't exist in this screen's config at all.
+    if (!entry) return true;
 
     setIsSaving(true);
     try {
@@ -124,17 +126,15 @@ export function useEntries(
     setIsSaving(true);
     try {
       const results = await Promise.all(
-        categories
-          .filter((c) => (values[c]?.quantity ?? 0) > 0)
-          .map((c) =>
+        categories.map((c) =>
             saveEntry({
               reportingYearId,
               scope,
               category: c,
-              quantity: values[c].quantity,
-              isOekostrom: values[c].isOekostrom,
-              billingMonth: values[c].billingMonth ?? null,
-              providerName: values[c].providerName ?? null,
+              quantity: values[c]?.quantity ?? 0,
+              isOekostrom: values[c]?.isOekostrom,
+              billingMonth: values[c]?.billingMonth ?? null,
+              providerName: values[c]?.providerName ?? null,
               inputMethod: 'MANUAL',
             }),
           ),

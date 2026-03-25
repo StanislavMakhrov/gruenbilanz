@@ -14,7 +14,6 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { EmissionEntry, MaterialEntry } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { calculateTotalCO2e } from '@/lib/emissions';
 
@@ -49,10 +48,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { searchParams } = request.nextUrl;
     const format = searchParams.get('format') ?? 'svg';
     const yearParam = searchParams.get('year');
+    const reportingYearIdParam = searchParams.get('reportingYearId');
 
-    // Resolve reporting year — explicit year param or fall back to most recent
+    // Resolve reporting year — prefer reportingYearId (DB id), then calendar year param,
+    // then fall back to most recent year (Bug 1 fix: ReportButtons passes reportingYearId).
     let reportingYear: { id: number; year: number } | null = null;
-    if (yearParam) {
+    if (reportingYearIdParam) {
+      const rid = parseInt(reportingYearIdParam, 10);
+      if (!isNaN(rid)) {
+        reportingYear = await prisma.reportingYear.findUnique({ where: { id: rid } });
+      }
+    }
+    if (!reportingYear && yearParam) {
       const y = parseInt(yearParam, 10);
       if (!isNaN(y)) {
         reportingYear = await prisma.reportingYear.findUnique({ where: { year: y } });
@@ -78,11 +85,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       if (company) companyName = company.firmenname;
 
       // Combine emission entries and material entries for total CO₂e calculation.
-      // Explicit type annotations are required — noImplicitAny prevents inference through Promise.all
-      // destructuring when the tuple element types are not directly visible to the compiler.
+      // Explicit local interfaces are required because the Prisma client stub returns
+      // `any` for query results, causing noImplicitAny errors in .map() callbacks.
+      interface RawEmissionEntry { category: string; quantity: number; isOekostrom: boolean }
+      interface RawMaterialEntry { material: string; quantityKg: number }
       const allEntries = [
-        ...entries.map((e: EmissionEntry) => ({ category: e.category as string, quantity: e.quantity, isOekostrom: e.isOekostrom })),
-        ...materialEntries.map((m: MaterialEntry) => ({ category: m.material as string, quantity: m.quantityKg })),
+        ...(entries as RawEmissionEntry[]).map((e) => ({ category: e.category, quantity: e.quantity, isOekostrom: e.isOekostrom })),
+        ...(materialEntries as RawMaterialEntry[]).map((m) => ({ category: m.material, quantity: m.quantityKg })),
       ];
 
       if (allEntries.length > 0) {

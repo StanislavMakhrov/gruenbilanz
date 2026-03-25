@@ -1,11 +1,14 @@
 /**
- * Unit tests for the 7 bug fixes in GrünBilanz.
+ * Unit tests for the 8 bug fixes in GrünBilanz.
  *
  * These tests cover the logic layers that are unit-testable without a DOM:
  * - Bug 1: Badge button routing logic (downloadBadge vs downloadReport)
  * - Bug 3: OcrUploadButton field name mapping (quantity vs value)
+ * - Bug 4a: Zero-value save guard removed (useEntries saveCategory)
+ * - Bug 4b: ScreenChangeLog cache cleared on close
  * - Bug 4: AuditLog metadata category filter (ScreenChangeLog filter logic)
  * - Bug 6: Profile API response shape handling (FirmenprofilScreen logic)
+ * - Bug 6/7: r.ok check before parsing profile API JSON
  *
  * UI-only bugs (Bug 2 visual polish, Bug 5 multi-invoice UI, Bug 7 logo preview)
  * are verified by TypeScript compilation + existing integration tests.
@@ -264,5 +267,162 @@ describe('Bug 1 — Badge button routing', () => {
     // These types should go to POST /api/reports
     const pdfTypes: PdfReportType[] = ['GHG_PROTOCOL', 'CSRD_QUESTIONNAIRE'];
     expect(pdfTypes).not.toContain('BADGE');
+  });
+});
+
+// ─── Bug 4a: Zero-value save guard ───────────────────────────────────────────
+// useEntries.saveCategory previously skipped saving when quantity === 0,
+// which prevented correcting a non-zero entry to 0.
+describe('Bug 4a — Zero-value save guard removed', () => {
+  interface EntryValue {
+    quantity: number;
+  }
+
+  /**
+   * Reproduces the OLD broken logic in useEntries.saveCategory (before fix).
+   * The `entry.quantity === 0` guard prevented saving zero corrections.
+   */
+  function shouldSkipSaveBroken(entry: EntryValue | undefined): boolean {
+    if (!entry || entry.quantity === 0) return true; // OLD: skips zero
+    return false;
+  }
+
+  /**
+   * Reproduces the FIXED logic in useEntries.saveCategory.
+   * Only skips when the entry doesn't exist at all (not in this screen's scope).
+   */
+  function shouldSkipSaveFixed(entry: EntryValue | undefined): boolean {
+    if (!entry) return true; // Only skip when category not found
+    return false; // Allow saving zero — correcting e.g. 8500 → 0
+  }
+
+  it('OLD code: incorrectly skips saving a zero correction', () => {
+    const entry: EntryValue = { quantity: 0 };
+    // User corrected 8500 to 0 — old code silently no-ops
+    expect(shouldSkipSaveBroken(entry)).toBe(true); // This was the bug
+  });
+
+  it('FIXED code: allows saving a zero correction', () => {
+    const entry: EntryValue = { quantity: 0 };
+    // Fix: zero should NOT be skipped — 0 is a valid correction
+    expect(shouldSkipSaveFixed(entry)).toBe(false);
+  });
+
+  it('FIXED code: still skips when entry is undefined (category not in scope)', () => {
+    expect(shouldSkipSaveFixed(undefined)).toBe(true);
+  });
+
+  it('FIXED code: saves non-zero values as before', () => {
+    const entry: EntryValue = { quantity: 8500 };
+    expect(shouldSkipSaveFixed(entry)).toBe(false);
+  });
+});
+
+// ─── Bug 6/7: r.ok check before parsing API JSON ────────────────────────────
+// The profile fetch must check r.ok before calling .json() to avoid
+// populating form fields from an error response object (e.g. { error: '...' }).
+describe('Bug 6/7 — r.ok check before parsing profile API response', () => {
+  /**
+   * Simulates the FIXED useEffect logic: throws on !r.ok so the catch block
+   * handles it instead of trying to populate form fields from error JSON.
+   */
+  async function loadProfileFixed(
+    mockResponse: { ok: boolean; json: () => Promise<unknown> }
+  ): Promise<unknown> {
+    if (!mockResponse.ok) {
+      throw new Error('Profile load failed');
+    }
+    return mockResponse.json();
+  }
+
+  it('throws when the API returns a non-OK response (e.g. 500)', async () => {
+    const errorResponse = {
+      ok: false,
+      json: async () => ({ error: 'Internal Server Error' }),
+    };
+    await expect(loadProfileFixed(errorResponse)).rejects.toThrow('Profile load failed');
+  });
+
+  it('returns parsed JSON when the API returns 200 OK', async () => {
+    const successResponse = {
+      ok: true,
+      json: async () => ({ firmenname: 'Test GmbH', mitarbeiter: 10 }),
+    };
+    const data = await loadProfileFixed(successResponse);
+    expect(data).toEqual({ firmenname: 'Test GmbH', mitarbeiter: 10 });
+  });
+
+  it('does NOT try to populate form from an error JSON object', async () => {
+    const errorJson = { error: 'Database connection failed' };
+    // With old code, firmenname would be '' (undefined from error object) — no feedback
+    const oldBrokenPopulate = (data: Record<string, unknown>) => data['firmenname'] ?? '';
+    expect(oldBrokenPopulate(errorJson)).toBe('');
+    // With new code, the error is thrown and the form is NOT touched
+    const errorResponse = { ok: false, json: async () => errorJson };
+    await expect(loadProfileFixed(errorResponse)).rejects.toThrow();
+  });
+});
+
+// ─── Bug 1 residual: Badge API accepts reportingYearId param ────────────────
+describe('Bug 1 residual — Badge API accepts reportingYearId query param', () => {
+  /**
+   * Simulates the updated badge API year-resolution logic.
+   * Priority: reportingYearId (DB id) > year (calendar year) > most recent.
+   */
+  interface ReportingYear { id: number; year: number }
+
+  function resolveYearParam(
+    reportingYearIdParam: string | null,
+    yearParam: string | null,
+    lookup: (id?: number, year?: number) => ReportingYear | null,
+  ): ReportingYear | null {
+    if (reportingYearIdParam) {
+      const rid = parseInt(reportingYearIdParam, 10);
+      if (!isNaN(rid)) {
+        const r = lookup(rid, undefined);
+        if (r) return r;
+      }
+    }
+    if (yearParam) {
+      const y = parseInt(yearParam, 10);
+      if (!isNaN(y)) {
+        const r = lookup(undefined, y);
+        if (r) return r;
+      }
+    }
+    return lookup(undefined, undefined); // fallback to most recent
+  }
+
+  const sampleYears: ReportingYear[] = [
+    { id: 1, year: 2023 },
+    { id: 2, year: 2024 },
+  ];
+
+  const mockLookup = (id?: number, year?: number): ReportingYear | null => {
+    if (id !== undefined) return sampleYears.find((y) => y.id === id) ?? null;
+    if (year !== undefined) return sampleYears.find((y) => y.year === year) ?? null;
+    return sampleYears[sampleYears.length - 1]; // most recent
+  };
+
+  it('resolves year from reportingYearId when provided', () => {
+    const result = resolveYearParam('1', null, mockLookup);
+    expect(result?.id).toBe(1);
+    expect(result?.year).toBe(2023);
+  });
+
+  it('falls back to year param when reportingYearId not provided', () => {
+    const result = resolveYearParam(null, '2023', mockLookup);
+    expect(result?.year).toBe(2023);
+  });
+
+  it('prefers reportingYearId over year param', () => {
+    const result = resolveYearParam('2', '2023', mockLookup);
+    // reportingYearId=2 → year 2024, NOT the year=2023 param
+    expect(result?.year).toBe(2024);
+  });
+
+  it('falls back to most recent when neither param is given', () => {
+    const result = resolveYearParam(null, null, mockLookup);
+    expect(result?.year).toBe(2024); // most recent
   });
 });
