@@ -256,7 +256,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             CO₂-Bilanz Berichtsjahr {year}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           {reportingYears.length > 0 ? (
             <YearSelector
               years={reportingYears.map((y) => ({ id: y.id, year: y.year }))}

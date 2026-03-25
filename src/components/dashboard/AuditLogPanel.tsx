@@ -58,7 +58,7 @@ export default function AuditLogPanel({ logs }: AuditLogPanelProps) {
         aria-expanded={isOpen}
       >
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium text-foreground">Änderungsprotokoll</h3>
+          <h3 className="text-sm font-medium text-foreground">Aktivitäten</h3>
           <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
             {logs.length} Einträge
           </span>
