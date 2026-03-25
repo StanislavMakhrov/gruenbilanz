@@ -371,3 +371,21 @@
   - `docs/features/001-gruenbilanz-full-build/code-review-bugs.md` — full review report with specification compliance table, adversarial test results, and 3 minor + 2 suggestion issues documented
 - **Problems Encountered:** None.
 - **Next Steps:** UAT Tester agent should verify user-facing behaviour (badge download, changelog, firmenprofil pre-fill, logo preview) in the running application.
+
+### UAT Tester (Bug-Fix E2E Tests)
+- **Date:** 2026-03-25
+- **Agent:** UAT Tester
+- **Summary:** Added Playwright E2E tests covering all 7 bug fixes and produced UAT report with manual verification checklist.
+- **Artifacts Produced:**
+  - `e2e-tests/bug-fixes.spec.ts` — 35+ E2E test cases covering Bugs 1–7
+  - `docs/features/001-gruenbilanz-full-build/uat-report-bugs.md` — UAT report with automated coverage summary and manual checklist
+- **Test Coverage:**
+  - Bug 1: Badge button network interception confirms GET /api/badge not POST /api/reports
+  - Bug 2: SVG icons present, hover:shadow CSS class, screens load without error
+  - Bug 3: /api/ocr endpoint exists, response shape uses `quantity`, file inputs present
+  - Bug 4: /api/audit returns valid JSON, ScreenChangeLog renders on Heizung and Firmenprofil
+  - Bug 5: "Beleg hinzufügen" button on Heizung+Strom; full upload flow (row add, month select, Jahresabrechnung toggle, remove, OCR quantity display)
+  - Bug 6: GET /api/profile returns seed data; Firmenprofil input pre-fills; wrong endpoint never called
+  - Bug 7: Logo input present; logoPath field in profile response; upload triggers save handler
+- **Problems Encountered:** None. Tests written against component source to ensure correct selectors.
+- **Next Steps:** Maintainer to verify manual UAT checklist and reply PASS/FAIL on PR.
