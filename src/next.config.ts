@@ -38,11 +38,19 @@ const nextConfig: NextConfig = {
       );
 
       config.module.rules.push({
-        // Match the PDF component source files directly, regardless of who imports them.
-        // Using `test` (not `issuer`) ensures the alias applies to each component's own
-        // imports — GHGReport.tsx is imported from lib/pdf.ts which is outside this
-        // directory, so an `issuer` condition on components/reports/ would miss it.
-        test: /components[/\\]reports[/\\].*\.(tsx?|js)$/,
+        // Match the PDF component source files AND lib/pdf.tsx.
+        //
+        // lib/pdf.tsx is also included (exact match, not a prefix) because `import React from 'react'`
+        // in a server module resolves to the RSC-vendored React 19 canary, whose createElement
+        // produces elements with `$$typeof: Symbol.for("react.transitional.element")`.
+        // @react-pdf/renderer (built against React 18) only recognises
+        // `Symbol.for("react.element")`, so the top-level createElement call in pdf.tsx
+        // must also use our custom runtime — achieved by writing JSX there and aliasing
+        // react/jsx-runtime to pdf-jsx-runtime.js via this rule.
+        //
+        // Using `test` (not `issuer`) ensures the alias applies to each file's own
+        // imports, regardless of which module imported them.
+        test: /lib[/\\]pdf\.tsx?$|components[/\\]reports[/\\].*\.tsx?$/,
         resolve: {
           alias: {
             // Replace the standard react/jsx-runtime with our internal-free version.
