@@ -74,7 +74,7 @@ function buildChartData(yearData: YearScopeData[]) {
 export default function YearOverYearChart({ yearData }: YearOverYearChartProps) {
   if (yearData.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-border p-6 shadow-sm flex items-center justify-center h-56">
+      <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6 flex items-center justify-center h-56">
         <p className="text-muted-foreground text-sm">Noch keine Jahresvergleichsdaten verfügbar</p>
       </div>
     );
@@ -83,8 +83,8 @@ export default function YearOverYearChart({ yearData }: YearOverYearChartProps) 
   const chartData = buildChartData(yearData);
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">
+    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-2">
         Jahresvergleich{yearData.length === 1 ? ` ${yearData[0].year}` : ''}
       </h3>
       {yearData.length === 1 && (

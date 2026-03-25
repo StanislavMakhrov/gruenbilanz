@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/prisma';
 import { calculateCO2e } from '@/lib/emissions';
 import { CATEGORY_LABELS, CATEGORY_SCOPE, SCOPE_LABELS } from '@/types';
-import type { EmissionCategory, EmissionEntry, MaterialEntry, Scope } from '@prisma/client';
+import type { EmissionCategory, EmissionEntry, MaterialEntry, Scope } from '@/types';
 
 import KpiCard from '@/components/dashboard/KpiCard';
 import ScopeDonut from '@/components/dashboard/ScopeDonut';
@@ -246,14 +246,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   /* ── Render ──────────────────────────────────────────────────────────── */
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      {/* Header row: company name + year selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Hero header — gradient card for a premium, branded first impression */}
+      <div className="bg-gradient-to-r from-[#064e3b]/5 to-[#047857]/5 rounded-2xl p-6 border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-3xl font-bold text-foreground">
             {company?.firmenname ?? 'GrünBilanz Dashboard'}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            CO₂-Bilanz Berichtsjahr {year}
+            🌱 CO₂-Bilanz Berichtsjahr {year}
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -265,22 +265,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           ) : null}
           <Link
             href="/wizard"
-            className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-sm font-medium px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors min-h-[44px]"
+            className="inline-flex items-center gap-1 bg-gradient-to-r from-[#064e3b] to-[#047857] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:shadow-lg hover:shadow-emerald-900/20 transition-all min-h-[44px]"
           >
             Daten erfassen
           </Link>
         </div>
       </div>
 
-      {/* No data state */}
+      {/* No data state — visually appealing empty state with clear call-to-action */}
       {!currentYearRecord && (
-        <div className="bg-muted/30 rounded-xl border border-border p-8 text-center">
-          <p className="text-muted-foreground mb-4">
-            Noch kein Berichtsjahr angelegt. Starten Sie mit der Datenerfassung.
+        <div className="bg-gradient-to-br from-emerald-50 to-white rounded-2xl border border-emerald-100 p-10 text-center">
+          <div className="text-4xl mb-4">🌿</div>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Noch kein Berichtsjahr angelegt</h2>
+          <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+            Starten Sie jetzt mit der Datenerfassung, um Ihre CO₂-Bilanz zu berechnen.
           </p>
           <Link
             href="/wizard"
-            className="inline-flex items-center bg-primary text-primary-foreground text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-primary/90"
+            className="inline-flex items-center bg-gradient-to-r from-[#064e3b] to-[#047857] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:shadow-lg hover:shadow-emerald-900/20 transition-all"
           >
             Jetzt starten →
           </Link>

@@ -15,7 +15,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatNumber } from '@/lib/utils';
-import type { Scope } from '@prisma/client';
+import type { Scope } from '@/types';
 
 export interface ScopeDataPoint {
   scope: Scope;
@@ -54,15 +54,15 @@ export default function ScopeDonut({ data }: ScopeDonutProps) {
 
   if (!hasData) {
     return (
-      <div className="bg-white rounded-xl border border-border p-6 shadow-sm flex items-center justify-center h-56">
+      <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6 flex items-center justify-center h-56">
         <p className="text-muted-foreground text-sm">Noch keine Daten erfasst</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">Verteilung nach Scope</h3>
+    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-4">Verteilung nach Scope</h3>
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie

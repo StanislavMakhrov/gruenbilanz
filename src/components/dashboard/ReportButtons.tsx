@@ -113,8 +113,8 @@ export default function ReportButtons({ reportingYearId }: ReportButtonsProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">Berichte & Nachweise</h3>
+    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-4">Berichte &amp; Nachweise</h3>
       <div className="flex flex-col sm:flex-row gap-3">
         {REPORT_CONFIGS.map(({ type, label, description, Icon }) => (
           <button
@@ -122,14 +122,26 @@ export default function ReportButtons({ reportingYearId }: ReportButtonsProps) {
             type="button"
             onClick={() => handleGenerate(type)}
             disabled={loading !== null}
-            className="flex-1 flex flex-col items-center justify-center gap-1 px-4 py-4 rounded-lg border border-border hover:border-primary hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all min-h-[44px] text-center"
+            className={`flex-1 flex flex-col items-center justify-center gap-2 px-4 py-4 rounded-xl border transition-all min-h-[44px] text-center disabled:opacity-50 disabled:cursor-not-allowed ${
+              type === 'GHG_PROTOCOL'
+                ? /* Primary action — subtle green tint to distinguish the main report */
+                  'bg-gradient-to-b from-emerald-50 to-white border-emerald-200 hover:border-emerald-400 hover:shadow-md hover:shadow-emerald-500/10'
+                : 'bg-gradient-to-b from-white to-gray-50 border-border/70 hover:border-primary/50 hover:shadow-md hover:shadow-primary/5'
+            }`}
           >
             {loading === type ? (
               <span className="text-sm text-muted-foreground animate-pulse">Erstelle…</span>
             ) : (
               <>
-                <Icon className="h-5 w-5 text-primary mb-0.5" aria-hidden="true" />
-                <span className="text-sm font-medium text-foreground">{label}</span>
+                {/* Icon in a coloured circle for visual hierarchy */}
+                <span
+                  className={`flex items-center justify-center w-9 h-9 rounded-full ${
+                    type === 'GHG_PROTOCOL' ? 'bg-emerald-100 text-emerald-700' : 'bg-muted text-primary'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="text-sm font-semibold text-foreground">{label}</span>
                 <span className="text-xs text-muted-foreground">{description}</span>
               </>
             )}

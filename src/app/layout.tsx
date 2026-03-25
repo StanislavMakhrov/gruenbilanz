@@ -2,6 +2,7 @@
  * Root layout for GrünBilanz.
  * Provides the HTML shell, global navigation, and toast notifications.
  * Language is set to "de" to trigger correct browser hyphenation and spell-check.
+ * System-UI font stack for premium SaaS typography without network dependency.
  */
 import type { Metadata } from 'next';
 import './globals.css';
@@ -21,22 +22,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className="min-h-screen bg-background text-foreground">
-        {/* Global navigation — sticky so it remains accessible during scroll */}
-        <nav className="sticky top-0 z-50 bg-white border-b border-border px-4 h-14 flex items-center justify-between shadow-sm">
+      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
+        {/* Global navigation — sticky, dark emerald gradient for premium SaaS look */}
+        <nav className="sticky top-0 z-50 bg-gradient-to-r from-[#064e3b] to-[#065f46] px-4 h-14 flex items-center justify-between shadow-lg shadow-emerald-900/20">
           <Link href="/" className="flex items-center gap-2 min-h-[44px] px-1">
-            <span className="text-primary font-bold text-lg leading-none">🌿 GrünBilanz</span>
+            <span className="text-white font-bold text-xl leading-none">🌿 GrünBilanz</span>
           </Link>
           <div className="flex items-center gap-1">
             <Link
               href="/wizard"
-              className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 rounded-md hover:bg-accent min-h-[44px] flex items-center transition-colors"
+              className="text-sm text-emerald-100 hover:text-white px-3 py-2 rounded-md hover:bg-white/10 min-h-[44px] flex items-center transition-colors"
             >
               Erfassung
             </Link>
             <Link
               href="/settings"
-              className="p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground min-h-[44px] flex items-center transition-colors"
+              className="p-2 rounded-md hover:bg-white/10 text-emerald-200 hover:text-white min-h-[44px] flex items-center transition-colors"
               aria-label="Einstellungen"
             >
               {/* lucide-react Settings icon — consistent with WizardLayoutInner (Bug 2 fix) */}

@@ -9,7 +9,7 @@
  */
 import { CheckCircle2, Circle } from 'lucide-react';
 import { CATEGORY_LABELS, SCOPE_LABELS } from '@/types';
-import type { EmissionCategory, Scope } from '@prisma/client';
+import type { EmissionCategory, Scope } from '@/types';
 
 const SCOPE_CATEGORIES: Record<Scope, EmissionCategory[]> = {
   SCOPE1: [
@@ -34,30 +34,36 @@ export default function CategoryStatusList({ erfassteKategorien }: CategoryStatu
   const scopes: Scope[] = ['SCOPE1', 'SCOPE2', 'SCOPE3'];
 
   return (
-    <div className="bg-white rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition-shadow">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">Erfassungsstatus</h3>
+    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+      <h3 className="text-sm font-semibold text-foreground mb-4">Erfassungsstatus</h3>
       <div className="space-y-6">
         {scopes.map((scope) => {
           const categories = SCOPE_CATEGORIES[scope];
           const erfasst = categories.filter((c) => erfassteKategorien.has(c)).length;
           return (
             <div key={scope}>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              {/* Scope header with count badge — clear visual separation between sections */}
+              <div className="flex items-center justify-between mb-2 pb-1 border-b border-border/40">
+                <h4 className="text-xs font-bold text-foreground/70 uppercase tracking-wider">
                   {SCOPE_LABELS[scope]}
                 </h4>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs font-semibold bg-muted text-muted-foreground rounded-full px-2 py-0.5">
                   {erfasst}/{categories.length}
                 </span>
               </div>
-              <ul className="space-y-1">
+              <ul className="space-y-1.5">
                 {categories.map((cat) => {
                   const isErfasst = erfassteKategorien.has(cat);
                   return (
-                    <li key={cat} className="flex items-center gap-2 text-sm">
+                    <li
+                      key={cat}
+                      className={`flex items-center gap-2 text-sm rounded-lg px-2 py-1 transition-colors ${
+                        isErfasst ? 'bg-emerald-50/70' : ''
+                      }`}
+                    >
                       {isErfasst ? (
                         <CheckCircle2
-                          className="h-4 w-4 text-green-600 shrink-0"
+                          className="h-4 w-4 text-emerald-600 shrink-0"
                           aria-label="Erfasst"
                         />
                       ) : (
@@ -66,7 +72,7 @@ export default function CategoryStatusList({ erfassteKategorien }: CategoryStatu
                           aria-label="Nicht erfasst"
                         />
                       )}
-                      <span className={isErfasst ? 'text-foreground' : 'text-muted-foreground'}>
+                      <span className={isErfasst ? 'text-foreground font-medium' : 'text-muted-foreground'}>
                         {CATEGORY_LABELS[cat]}
                       </span>
                     </li>
