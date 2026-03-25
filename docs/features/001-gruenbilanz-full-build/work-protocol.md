@@ -363,3 +363,11 @@
     - Section 5.3 (Badge): replaced single-JSON-object description with per-format query-parameter table and example URLs; updated tooling note (sharp, not @vercel/og).
     - Audit log: added paragraph explaining `metadata.category` in `saveEntry` and `CompanyProfile` audit rows in `/api/audit`.
 - **Problems Encountered:** None. All implementation details verified against source files before documenting.
+
+### Code Reviewer (Bug-Fix Review)
+- **Date:** 2026-03-25
+- **Summary:** Reviewed all 7 bug fixes implemented by the Developer. Ran 41/41 unit tests (all pass). Verified each root cause from `issue-analysis.md` against the implementation. Found no blockers or major issues. Three minor issues identified: (1) `downloadBadge` passes `reportingYearId` (DB PK) but badge API expects `year` (calendar year) — silently falls back to most-recent year for multi-year deployments; (2) `FirmenprofilScreen.tsx` is 304 lines, 4 over the 300-line convention; (3) `deleteEntry` audit log is missing `metadata` so DELETE events never appear in `ScreenChangeLog`. Verdict: **APPROVED**.
+- **Artifacts Produced:**
+  - `docs/features/001-gruenbilanz-full-build/code-review-bugs.md` — full review report with specification compliance table, adversarial test results, and 3 minor + 2 suggestion issues documented
+- **Problems Encountered:** None.
+- **Next Steps:** UAT Tester agent should verify user-facing behaviour (badge download, changelog, firmenprofil pre-fill, logo preview) in the running application.
