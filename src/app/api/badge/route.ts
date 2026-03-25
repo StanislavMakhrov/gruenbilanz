@@ -17,12 +17,31 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateTotalCO2e } from '@/lib/emissions';
 
+/**
+ * Escapes special XML/HTML characters in a string so it can be safely embedded
+ * in SVG attributes, XML text nodes, or HTML comments without breaking markup.
+ * Handles the five predefined XML entities plus the HTML comment-breaking sequence.
+ */
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+    // Prevent breaking out of HTML comments (e.g. companyName containing "-->")
+    .replace(/--/g, '&#x2D;&#x2D;');
+}
+
 /** Builds the SVG string for the badge */
 function buildSvg(companyName: string, co2eTonnesStr: string, year: number): string {
   const w = 240;
   const h = 60;
+  // XML-escape the company name so that special chars (&, <, >, etc.) don't break
+  // the SVG <title> element or any other XML context.
+  const safeName = escapeXml(companyName);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" role="img" aria-label="GrünBilanz ${co2eTonnesStr} t CO2e ${year}">
-  <title>GrünBilanz — ${companyName} — ${co2eTonnesStr} t CO2e (${year})</title>
+  <title>GrünBilanz — ${safeName} — ${co2eTonnesStr} t CO2e (${year})</title>
   <defs>
     <linearGradient id="gb-grad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#2D6A4F"/>
@@ -132,7 +151,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (format === 'html') {
       const baseUrl = request.nextUrl.origin;
       const badgeUrl = `${baseUrl}/api/badge?format=svg&year=${displayYear}`;
-      const html = `<!-- GrünBilanz Nachhaltigkeitsbadge — ${companyName} ${displayYear} -->
+      // XML-escape companyName: it appears in an HTML comment (where "-->" would
+      // break out of the comment) and in the <img alt> attribute.
+      const safeCompanyName = escapeXml(companyName);
+      const html = `<!-- GrünBilanz Nachhaltigkeitsbadge — ${safeCompanyName} ${displayYear} -->
 <a href="${baseUrl}" rel="noopener noreferrer" target="_blank">
   <img src="${badgeUrl}"
        alt="GrünBilanz: ${co2eTonnesStr} t CO2e (${displayYear})"

@@ -5,14 +5,13 @@
  * Covers Restmüll, Bauschutt, Altmetall (negative factor = recycling credit),
  * and a generic "Sonstiger Abfall" bucket.
  * The Altmetall field includes an explanatory note about the negative factor.
- * Bug 5 fix: MultiInvoiceUpload added for multiple disposal invoices per category.
+ * Bug 5 fix: OcrUploadButton and FieldDocumentZone removed — MultiInvoiceUpload is the
+ * single upload interface for waste disposal categories.
  */
 import { toast } from 'sonner';
 import SaveButton from '@/components/wizard/SaveButton';
 import StatusBadge from '@/components/wizard/StatusBadge';
 import PlausibilityWarning from '@/components/wizard/PlausibilityWarning';
-import FieldDocumentZone from '@/components/wizard/FieldDocumentZone';
-import OcrUploadButton from '@/components/wizard/OcrUploadButton';
 import CsvImportButton from '@/components/wizard/CsvImportButton';
 import MultiInvoiceUpload from '@/components/wizard/MultiInvoiceUpload';
 import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
@@ -104,12 +103,6 @@ export default function AbfallScreen({ reportingYearId, year }: AbfallScreenProp
           <div key={category}>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-medium" htmlFor={category}>{label}</label>
-              <OcrUploadButton
-                category={category}
-                reportingYearId={reportingYearId}
-                scope="SCOPE3"
-                onResult={(v) => setValue(category, { quantity: v })}
-              />
             </div>
             {note && (
               <p className="text-xs text-muted-foreground mb-1.5 flex items-start gap-1">
@@ -136,8 +129,7 @@ export default function AbfallScreen({ reportingYearId, year }: AbfallScreenProp
               category={category}
               value={values[category]?.quantity || null}
             />
-            <FieldDocumentZone fieldKey={`${category}_${year}`} year={year} />
-            {/* Multi-invoice upload for waste disposal invoices (Bug 5 fix) */}
+            {/* Single upload interface: replaces OcrUploadButton + FieldDocumentZone (Bug 5 fix) */}
             <MultiInvoiceUpload
               category={category}
               reportingYearId={reportingYearId}

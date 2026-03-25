@@ -5,15 +5,14 @@
  * Covers fuel consumption (Diesel, Benzin) plus a dynamic km table for
  * vehicle-type-specific mileage tracking.
  * The km table lets users add rows for each vehicle or vehicle type.
- * Bug 5 fix: MultiInvoiceUpload added to fuel consumption fields for multiple invoices.
+ * Bug 5 fix: OcrUploadButton and FieldDocumentZone removed — MultiInvoiceUpload is the
+ * single upload interface for fuel consumption fields.
  */
 import { useState } from 'react';
 import { toast } from 'sonner';
 import SaveButton from '@/components/wizard/SaveButton';
 import StatusBadge from '@/components/wizard/StatusBadge';
 import PlausibilityWarning from '@/components/wizard/PlausibilityWarning';
-import FieldDocumentZone from '@/components/wizard/FieldDocumentZone';
-import OcrUploadButton from '@/components/wizard/OcrUploadButton';
 import CsvImportButton from '@/components/wizard/CsvImportButton';
 import MultiInvoiceUpload from '@/components/wizard/MultiInvoiceUpload';
 import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
@@ -154,7 +153,6 @@ export default function FuhrparkScreen({ reportingYearId, year }: FuhrparkScreen
             <div key={category} className="mb-5">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-medium" htmlFor={category}>{label}</label>
-                <OcrUploadButton category={category} reportingYearId={reportingYearId} scope="SCOPE1" onResult={(v) => setValue(category, { quantity: v })} />
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -171,8 +169,7 @@ export default function FuhrparkScreen({ reportingYearId, year }: FuhrparkScreen
                 <span className="text-sm text-muted-foreground w-8 shrink-0">{unit}</span>
               </div>
               <PlausibilityWarning category={category} value={values[category]?.quantity || null} />
-              <FieldDocumentZone fieldKey={`${category}_${year}`} year={year} />
-              {/* Multi-invoice upload for fuel invoices (Bug 5 fix) */}
+              {/* Single upload interface: replaces OcrUploadButton + FieldDocumentZone (Bug 5 fix) */}
               <MultiInvoiceUpload
                 category={category}
                 reportingYearId={reportingYearId}

@@ -85,7 +85,7 @@ export default function ScreenChangeLog({
       })
       .catch(() => setLogs([]))
       .finally(() => setIsLoading(false));
-  }, [isOpen, reportingYearId, categories, logs.length]);
+  }, [isOpen, reportingYearId, categories]);
 
   return (
     <div className="mt-8 rounded-xl border border-border bg-white overflow-hidden">

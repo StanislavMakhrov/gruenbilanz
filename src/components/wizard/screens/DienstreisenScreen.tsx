@@ -5,14 +5,13 @@
  * Covers air travel, rail travel, and commuter mileage (Pendlerverkehr).
  * Pendler-km is the product of employee count × average km/year;
  * a helper hint is shown to explain the calculation.
- * Bug 5 fix: MultiInvoiceUpload added for multiple travel invoices per category.
+ * Bug 5 fix: OcrUploadButton and FieldDocumentZone removed — MultiInvoiceUpload is the
+ * single upload interface for travel categories.
  */
 import { toast } from 'sonner';
 import SaveButton from '@/components/wizard/SaveButton';
 import StatusBadge from '@/components/wizard/StatusBadge';
 import PlausibilityWarning from '@/components/wizard/PlausibilityWarning';
-import FieldDocumentZone from '@/components/wizard/FieldDocumentZone';
-import OcrUploadButton from '@/components/wizard/OcrUploadButton';
 import CsvImportButton from '@/components/wizard/CsvImportButton';
 import MultiInvoiceUpload from '@/components/wizard/MultiInvoiceUpload';
 import ScreenChangeLog from '@/components/wizard/ScreenChangeLog';
@@ -115,12 +114,6 @@ export default function DienstreisenScreen({ reportingYearId, year }: Dienstreis
           <div key={category}>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-sm font-medium" htmlFor={category}>{label}</label>
-              <OcrUploadButton
-                category={category}
-                reportingYearId={reportingYearId}
-                scope="SCOPE3"
-                onResult={(v) => setValue(category, { quantity: v })}
-              />
             </div>
             {hint && <p className="text-xs text-muted-foreground mb-1.5">{hint}</p>}
             <div className="flex items-center gap-2">
@@ -143,8 +136,7 @@ export default function DienstreisenScreen({ reportingYearId, year }: Dienstreis
               category={category}
               value={values[category]?.quantity || null}
             />
-            <FieldDocumentZone fieldKey={`${category}_${year}`} year={year} />
-            {/* Multi-invoice upload for travel receipts (Bug 5 fix) */}
+            {/* Single upload interface: replaces OcrUploadButton + FieldDocumentZone (Bug 5 fix) */}
             <MultiInvoiceUpload
               category={category}
               reportingYearId={reportingYearId}
