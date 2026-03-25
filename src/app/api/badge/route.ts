@@ -14,6 +14,7 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { EmissionEntry, MaterialEntry } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { calculateTotalCO2e } from '@/lib/emissions';
 
@@ -77,10 +78,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       if (company) companyName = company.firmenname;
 
       // Combine emission entries and material entries for total CO₂e calculation.
-      // Type annotations removed — Prisma infers the correct types from findMany() return values.
+      // Explicit type annotations are required — noImplicitAny prevents inference through Promise.all
+      // destructuring when the tuple element types are not directly visible to the compiler.
       const allEntries = [
-        ...entries.map((e) => ({ category: e.category as string, quantity: e.quantity, isOekostrom: e.isOekostrom })),
-        ...materialEntries.map((m) => ({ category: m.material as string, quantity: m.quantityKg })),
+        ...entries.map((e: EmissionEntry) => ({ category: e.category as string, quantity: e.quantity, isOekostrom: e.isOekostrom })),
+        ...materialEntries.map((m: MaterialEntry) => ({ category: m.material as string, quantity: m.quantityKg })),
       ];
 
       if (allEntries.length > 0) {
