@@ -269,3 +269,37 @@
   Previous fix (aliasing to real `react/jsx-runtime`) appeared correct but still triggered
   the crash because the real `react/jsx-runtime.js` internally requires the RSC React
   for `ReactCurrentOwner`, bringing the same problem back indirectly.
+
+### CI Fixes — PDF 500: RSC React 19 `$$typeof` mismatch (2026-03-25)
+- **Date:** 2026-03-25
+- **Agent:** Developer
+- **Summary:** Completed the remaining PDF generation fix after discovering the true root cause.
+- **Root Cause:**
+  The RSC-vendored React in Next.js 15 (React 19.1.0-canary) was being used as the `react`
+  module in `lib/pdf.ts`. React 19 canary creates elements with
+  `$$typeof: Symbol.for("react.transitional.element")` rather than React 18's
+  `Symbol.for("react.element")`. Because `@react-pdf/renderer` (v4.3.2) is built against
+  React 18, its reconciler did not recognise the React 19 element format and crashed with
+  a 500 for every `POST /api/reports` call. This was confirmed by loading the RSC React
+  directly in Node.js: `next/dist/compiled/next-server/app-page.runtime.prod.js →
+  vendored["react-rsc"].React` creates elements with `"react.transitional.element"`.
+  The previous fix (custom JSX runtime via webpack alias) worked for the PDF component
+  files (chunks 599/230), but `lib/pdf.ts` still used `React.createElement(...)` with
+  the RSC React for the top-level element — missing the alias.
+- **Fix:**
+  1. Renamed `src/lib/pdf.ts` → `src/lib/pdf.tsx` and changed the top-level component
+     creation from `React.createElement(GHGReport, { data })` to JSX syntax
+     `<GHGReport data={data} />`.
+  2. Extended the webpack `resolve.alias` rule in `next.config.ts` to also cover
+     `lib/pdf.tsx` (regex updated from `components/reports/**` to include `lib/pdf`).
+  This means the SWC/webpack JSX transform for `lib/pdf.tsx` now calls the custom
+  `pdf-jsx-runtime.js` instead of the RSC React, producing elements with the correct
+  `Symbol.for("react.element")` that `@react-pdf/renderer` accepts.
+- **Artifacts Modified:**
+  - `src/lib/pdf.tsx` (renamed from `pdf.ts`) — JSX syntax replaces React.createElement
+  - `src/next.config.ts` — webpack test regex extended to cover lib/pdf.tsx
+- **Verification:** Build clean, 27/27 unit tests pass. Compiled route chunk now shows
+  `lib/pdf` module using `n.jsx` (from module 5227 = pdf-jsx-runtime.js) with no
+  reference to RSC React module 61120.
+- **Problems Encountered:** None once root cause confirmed via Node.js inspection of the
+  RSC React's createElement output.
