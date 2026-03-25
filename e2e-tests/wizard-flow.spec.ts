@@ -83,7 +83,9 @@ test.describe('Wizard — Navigation and Side-Nav', () => {
     const heizungLink = page.locator('a[href*="heizung"]').first();
     if (await heizungLink.isVisible()) {
       await heizungLink.click();
-      await page.waitForLoadState('networkidle');
+      // waitForURL handles Next.js client-side navigation; waitForLoadState('networkidle')
+      // does not wait for the URL to update in SPA routing.
+      await page.waitForURL('**/heizung**', { timeout: 10000 });
       await expect(page.url()).toContain('heizung');
     }
   });

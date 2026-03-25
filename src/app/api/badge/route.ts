@@ -76,10 +76,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       if (company) companyName = company.firmenname;
 
-      // Combine emission entries and material entries for total CO₂e calculation
+      // Combine emission entries and material entries for total CO₂e calculation.
+      // Type annotations removed — Prisma infers the correct types from findMany() return values.
       const allEntries = [
-        ...entries.map((e: EmissionEntry) => ({ category: e.category as string, quantity: e.quantity, isOekostrom: e.isOekostrom })),
-        ...materialEntries.map((m: MaterialEntry) => ({ category: m.material as string, quantity: m.quantityKg })),
+        ...entries.map((e) => ({ category: e.category as string, quantity: e.quantity, isOekostrom: e.isOekostrom })),
+        ...materialEntries.map((m) => ({ category: m.material as string, quantity: m.quantityKg })),
       ];
 
       if (allEntries.length > 0) {
