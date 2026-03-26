@@ -1,13 +1,14 @@
 -- GrünBilanz database initialization script
--- This runs on first container startup as a fallback if Prisma migrations fail.
--- Created by: GrünBilanz project
+--
+-- NOTE: Table creation is handled exclusively by `prisma migrate deploy`
+-- (run inside healthcheck.sh on container startup). Seed data is inserted
+-- by `prisma/seed.ts` via `npx tsx prisma/seed.ts`.
+--
+-- This file is kept as a reference / fallback no-op.
+-- DO NOT add CREATE TABLE statements here — they would conflict with Prisma migrations.
 
--- Ensure the database user exists (created by healthcheck.sh, this is a no-op in most cases)
--- The tables below mirror the Prisma schema and are created idempotently.
-
--- Enable pgcrypto for UUID support (optional, not required by this schema)
+-- Enable pgcrypto extension (optional — used if UUID helpers are needed later)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- Note: Actual table creation is handled by Prisma migrate deploy.
--- This file is kept minimal as a safety net.
+-- Sanity-check query so Docker can verify this file ran without errors
 SELECT 1;

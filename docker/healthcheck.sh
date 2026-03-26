@@ -41,15 +41,26 @@ if ! su postgres -c "psql -h localhost -tAc \"SELECT 1 FROM pg_database WHERE da
   su postgres -c "psql -h localhost -c \"CREATE DATABASE gruenbilanz OWNER gruenbilanz;\""
 fi
 
-# Run Prisma migrations (idempotent — safe to run on every startup)
+# Push Prisma schema to the database (idempotent — safe to run on every startup).
+# Uses 'db push' instead of 'migrate deploy' because there are no migration files —
+# the schema is applied directly from prisma/schema.prisma.
 cd /app
-echo "Running Prisma migrations..."
-npx prisma migrate deploy
+echo "Applying Prisma schema..."
+npx prisma db push --accept-data-loss
 
-# Run seed script on first startup (detected by absence of seed marker)
+# Run seed script on first startup (detected by absence of seed marker).
+# Use an explicit if/else with exit 1 on failure rather than the && chain
+# because busybox ash's set -e does not always propagate errors from if-body
+# commands, which could let the server start with an empty database.
 if [ ! -f "$PGDATA/.seeded" ]; then
   echo "Running database seed (first startup)..."
-  npx tsx prisma/seed.ts && touch "$PGDATA/.seeded" && echo "Seed complete."
+  if npx tsx prisma/seed.ts; then
+    touch "$PGDATA/.seeded"
+    echo "Seed complete."
+  else
+    echo "ERROR: Database seed failed. Container will not start."
+    exit 1
+  fi
 else
   echo "Database already seeded, skipping."
 fi

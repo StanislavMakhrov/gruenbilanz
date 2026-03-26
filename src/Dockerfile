@@ -1,6 +1,8 @@
 # Stage 1: Build the Next.js application
 FROM node:20-alpine AS builder
 WORKDIR /app
+# Install openssl so Prisma can detect the correct binary target during build
+RUN apk add --no-cache openssl
 COPY src/package*.json ./
 RUN npm ci
 # Copy src/ contents as the project root (next.config.js, app/, components/, etc.)
