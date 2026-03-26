@@ -31,7 +31,7 @@ export default function BranchenvergleichCard({
   const barWidth = Math.min(100, (companyKgPerEmployee / Math.max(benchmarkKgPerEmployee, 1)) * 100);
 
   return (
-    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
       <h3 className="text-sm font-semibold text-foreground mb-1">Branchenvergleich</h3>
       <p className="text-xs text-muted-foreground mb-5">Branche: {brancheLabel}</p>
 

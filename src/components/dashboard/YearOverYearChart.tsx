@@ -16,6 +16,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatNumber } from '@/lib/utils';
+import { SCOPE_COLORS } from '@/lib/scopeColors';
 
 export interface YearScopeData {
   year: number;
@@ -74,7 +75,7 @@ function buildChartData(yearData: YearScopeData[]) {
 export default function YearOverYearChart({ yearData }: YearOverYearChartProps) {
   if (yearData.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6 flex items-center justify-center h-56">
+      <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex items-center justify-center h-56">
         <p className="text-muted-foreground text-sm">Noch keine Jahresvergleichsdaten verfügbar</p>
       </div>
     );
@@ -83,7 +84,7 @@ export default function YearOverYearChart({ yearData }: YearOverYearChartProps) 
   const chartData = buildChartData(yearData);
 
   return (
-    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
       <h3 className="text-sm font-semibold text-foreground mb-2">
         Jahresvergleich{yearData.length === 1 ? ` ${yearData[0].year}` : ''}
       </h3>
@@ -104,9 +105,10 @@ export default function YearOverYearChart({ yearData }: YearOverYearChartProps) 
           {/* Recharts types for custom tooltip content are now accurate — no suppression needed */}
           <Tooltip content={<CustomTooltip />} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar dataKey="Scope 1" fill="#15803d" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Scope 2" fill="#22c55e" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="Scope 3" fill="#86efac" radius={[4, 4, 0, 0]} />
+          {/* Bar colours sourced from shared SCOPE_COLORS for visual consistency across all charts */}
+          <Bar dataKey="Scope 1" fill={SCOPE_COLORS.SCOPE1} radius={[4, 4, 0, 0]} />
+          <Bar dataKey="Scope 2" fill={SCOPE_COLORS.SCOPE2} radius={[4, 4, 0, 0]} />
+          <Bar dataKey="Scope 3" fill={SCOPE_COLORS.SCOPE3} radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

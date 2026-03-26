@@ -5,9 +5,11 @@
  * or create a new one. Year changes update the `?year=YYYY` URL param so
  * the dashboard server component re-fetches data for the chosen year.
  * Creating a new year calls the createReportingYear server action directly.
+ * ChevronDown overlay replaces the native browser arrow for a consistent look.
  */
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { createReportingYear } from '@/lib/actions';
 import { toast } from 'sonner';
 
@@ -73,20 +75,27 @@ export default function YearSelector({ years, currentYear }: YearSelectorProps) 
       <label htmlFor="year-selector" className="text-sm text-muted-foreground">
         Berichtsjahr:
       </label>
-      <select
-        id="year-selector"
-        value={String(currentYear)}
-        onChange={handleChange}
-        disabled={isPending || isCreating}
-        className="text-sm border border-border rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px]"
-      >
-        {years.map((y) => (
-          <option key={y.id} value={String(y.year)}>
-            {y.year}
-          </option>
-        ))}
-        <option value={NEW_YEAR_VALUE}>+ Neues Jahr anlegen</option>
-      </select>
+      {/* Relative wrapper positions the ChevronDown icon over the select */}
+      <div className="relative">
+        <select
+          id="year-selector"
+          value={String(currentYear)}
+          onChange={handleChange}
+          disabled={isPending || isCreating}
+          className="appearance-none text-sm border border-border rounded-lg px-3 py-2 pr-8 bg-card focus:outline-none focus:ring-2 focus:ring-ring min-h-[44px] font-sans cursor-pointer text-foreground"
+        >
+          {years.map((y) => (
+            <option key={y.id} value={String(y.year)}>
+              {y.year}
+            </option>
+          ))}
+          <option value={NEW_YEAR_VALUE}>+ Neues Jahr anlegen</option>
+        </select>
+        <ChevronDown
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
+          aria-hidden="true"
+        />
+      </div>
       {(isPending || isCreating) && (
         <span className="text-xs text-muted-foreground animate-pulse">Laden…</span>
       )}

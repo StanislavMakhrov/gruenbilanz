@@ -7,6 +7,7 @@
  * Source documents can be downloaded via /api/documents/[id].
  */
 import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 
 export interface SerializedAuditLog {
@@ -49,7 +50,7 @@ export default function AuditLogPanel({ logs }: AuditLogPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
       {/* Header / toggle button */}
       <button
         type="button"
@@ -63,7 +64,13 @@ export default function AuditLogPanel({ logs }: AuditLogPanelProps) {
             {logs.length} Einträge
           </span>
         </div>
-        <span className="text-muted-foreground text-xs">{isOpen ? '▲ Einklappen' : '▼ Aufklappen'}</span>
+        <span className="text-muted-foreground">
+          {isOpen ? (
+            <ChevronUp className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <ChevronDown className="h-4 w-4" aria-hidden="true" />
+          )}
+        </span>
       </button>
 
       {isOpen && (

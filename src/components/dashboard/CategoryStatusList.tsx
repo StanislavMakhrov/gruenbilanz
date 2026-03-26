@@ -34,7 +34,7 @@ export default function CategoryStatusList({ erfassteKategorien }: CategoryStatu
   const scopes: Scope[] = ['SCOPE1', 'SCOPE2', 'SCOPE3'];
 
   return (
-    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
       <h3 className="text-sm font-semibold text-foreground mb-4">Erfassungsstatus</h3>
       <div className="space-y-6">
         {scopes.map((scope) => {

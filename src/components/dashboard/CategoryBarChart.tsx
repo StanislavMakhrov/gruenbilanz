@@ -16,6 +16,7 @@ import {
   Cell,
 } from 'recharts';
 import { formatNumber } from '@/lib/utils';
+import { SCOPE_COLORS } from '@/lib/scopeColors';
 import type { Scope } from '@/types';
 
 export interface CategoryDataPoint {
@@ -29,11 +30,7 @@ interface CategoryBarChartProps {
   data: CategoryDataPoint[];
 }
 
-const SCOPE_COLORS: Record<string, string> = {
-  SCOPE1: '#15803d',
-  SCOPE2: '#22c55e',
-  SCOPE3: '#86efac',
-};
+// Scope colour palette imported from shared lib — see @/lib/scopeColors
 
 /** Tooltip showing category name and exact value in t CO₂e */
 function CustomTooltip({
@@ -64,7 +61,7 @@ export default function CategoryBarChart({ data }: CategoryBarChartProps) {
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6 flex items-center justify-center h-64">
+      <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex items-center justify-center h-64">
         <p className="text-muted-foreground text-sm">Noch keine Daten erfasst</p>
       </div>
     );
@@ -73,7 +70,7 @@ export default function CategoryBarChart({ data }: CategoryBarChartProps) {
   const chartHeight = Math.max(240, chartData.length * 36);
 
   return (
-    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
       <h3 className="text-sm font-semibold text-foreground mb-4">Emissionen nach Kategorie</h3>
       <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
@@ -96,7 +93,7 @@ export default function CategoryBarChart({ data }: CategoryBarChartProps) {
             {chartData.map((entry) => (
               <Cell
                 key={entry.category}
-                fill={SCOPE_COLORS[entry.scope] ?? '#6b7280'}
+                fill={SCOPE_COLORS[entry.scope as keyof typeof SCOPE_COLORS] ?? '#6b7280'}
               />
             ))}
           </Bar>

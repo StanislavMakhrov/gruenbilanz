@@ -6,6 +6,7 @@
  * confirmStagingEntry: moves staging → EmissionEntry in a single transaction.
  */
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import type { ActionResult } from './entries';
 
 /**
@@ -62,7 +63,7 @@ export async function confirmStagingEntry(
     // Wrap EmissionEntry creation, StagingEntry deletion, and AuditLog in a single
     // atomic transaction so a mid-operation failure cannot produce orphaned entries.
     let createdId: number | undefined;
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const created = await tx.emissionEntry.create({
         data: {
           reportingYearId: staging.reportingYearId,

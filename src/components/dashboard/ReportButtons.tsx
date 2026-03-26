@@ -113,7 +113,7 @@ export default function ReportButtons({ reportingYearId }: ReportButtonsProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
       <h3 className="text-sm font-semibold text-foreground mb-4">Berichte &amp; Nachweise</h3>
       <div className="flex flex-col sm:flex-row gap-3">
         {REPORT_CONFIGS.map(({ type, label, description, Icon }) => (
@@ -124,25 +124,25 @@ export default function ReportButtons({ reportingYearId }: ReportButtonsProps) {
             disabled={loading !== null}
             className={`flex-1 flex flex-col items-center justify-center gap-2 px-4 py-4 rounded-xl border transition-all min-h-[44px] text-center disabled:opacity-50 disabled:cursor-not-allowed ${
               type === 'GHG_PROTOCOL'
-                ? /* Primary action — subtle green tint to distinguish the main report */
-                  'bg-gradient-to-b from-emerald-50 to-white border-emerald-200 hover:border-emerald-400 hover:shadow-md hover:shadow-emerald-500/10'
-                : 'bg-gradient-to-b from-white to-gray-50 border-border/70 hover:border-primary/50 hover:shadow-md hover:shadow-primary/5'
+                ? /* Primary action — solid primary colour to highlight the main report */
+                  'bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:shadow-md'
+                : 'bg-card border-border hover:border-primary/50 hover:shadow-md hover:shadow-primary/5'
             }`}
           >
             {loading === type ? (
-              <span className="text-sm text-muted-foreground animate-pulse">Erstelle…</span>
+              <span className={`text-sm animate-pulse ${type === 'GHG_PROTOCOL' ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>Erstelle…</span>
             ) : (
               <>
-                {/* Icon in a coloured circle for visual hierarchy */}
+                {/* Icon in a coloured circle — adapts to primary vs secondary button context */}
                 <span
                   className={`flex items-center justify-center w-9 h-9 rounded-full ${
-                    type === 'GHG_PROTOCOL' ? 'bg-emerald-100 text-emerald-700' : 'bg-muted text-primary'
+                    type === 'GHG_PROTOCOL' ? 'bg-white/20 text-primary-foreground' : 'bg-muted text-primary'
                   }`}
                 >
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
-                <span className="text-sm font-semibold text-foreground">{label}</span>
-                <span className="text-xs text-muted-foreground">{description}</span>
+                <span className={`text-sm font-semibold ${type === 'GHG_PROTOCOL' ? 'text-primary-foreground' : 'text-foreground'}`}>{label}</span>
+                <span className={`text-xs ${type === 'GHG_PROTOCOL' ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>{description}</span>
               </>
             )}
           </button>

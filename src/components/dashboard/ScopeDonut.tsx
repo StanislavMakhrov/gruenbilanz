@@ -15,6 +15,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatNumber } from '@/lib/utils';
+import { SCOPE_COLORS } from '@/lib/scopeColors';
 import type { Scope } from '@/types';
 
 export interface ScopeDataPoint {
@@ -27,13 +28,6 @@ export interface ScopeDataPoint {
 interface ScopeDonutProps {
   data: ScopeDataPoint[];
 }
-
-/** Green palette: dark → medium → light for Scope 1 → 2 → 3 */
-const SCOPE_COLORS: Record<string, string> = {
-  SCOPE1: '#15803d', // green-700
-  SCOPE2: '#22c55e', // green-500
-  SCOPE3: '#86efac', // green-300
-};
 
 /** Custom tooltip showing tonnes and percentage */
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: ScopeDataPoint }> }) {
@@ -54,14 +48,14 @@ export default function ScopeDonut({ data }: ScopeDonutProps) {
 
   if (!hasData) {
     return (
-      <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6 flex items-center justify-center h-56">
+      <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex items-center justify-center h-56">
         <p className="text-muted-foreground text-sm">Noch keine Daten erfasst</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-border/50 shadow-md shadow-black/5 p-6">
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
       <h3 className="text-sm font-semibold text-foreground mb-4">Verteilung nach Scope</h3>
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
@@ -76,7 +70,7 @@ export default function ScopeDonut({ data }: ScopeDonutProps) {
             paddingAngle={3}
           >
             {data.map((entry) => (
-              <Cell key={entry.scope} fill={SCOPE_COLORS[entry.scope] ?? '#6b7280'} />
+              <Cell key={entry.scope} fill={SCOPE_COLORS[entry.scope as keyof typeof SCOPE_COLORS] ?? '#6b7280'} />
             ))}
           </Pie>
           {/* Recharts types for custom tooltip content are now accurate — no suppression needed */}

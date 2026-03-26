@@ -246,8 +246,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   /* ── Render ──────────────────────────────────────────────────────────── */
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      {/* Hero header — gradient card for a premium, branded first impression */}
-      <div className="bg-gradient-to-r from-[#064e3b]/5 to-[#047857]/5 rounded-2xl p-6 border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Hero header — clean card with company name and year controls */}
+      <div className="bg-card rounded-2xl p-6 border border-border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
             {company?.firmenname ?? 'GrünBilanz Dashboard'}
@@ -265,16 +265,16 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           ) : null}
           <Link
             href="/wizard"
-            className="inline-flex items-center gap-1 bg-gradient-to-r from-[#064e3b] to-[#047857] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:shadow-lg hover:shadow-emerald-900/20 transition-all min-h-[44px]"
+            className="inline-flex items-center gap-1 bg-primary text-primary-foreground text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-primary/90 hover:shadow-md transition-all min-h-[44px]"
           >
             Daten erfassen
           </Link>
         </div>
       </div>
 
-      {/* No data state — visually appealing empty state with clear call-to-action */}
+      {/* No data state — clean card with clear call-to-action */}
       {!currentYearRecord && (
-        <div className="bg-gradient-to-br from-emerald-50 to-white rounded-2xl border border-emerald-100 p-10 text-center">
+        <div className="bg-card rounded-2xl border border-border p-10 text-center shadow-sm">
           <div className="text-4xl mb-4">🌿</div>
           <h2 className="text-lg font-semibold text-foreground mb-2">Noch kein Berichtsjahr angelegt</h2>
           <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
@@ -282,7 +282,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </p>
           <Link
             href="/wizard"
-            className="inline-flex items-center bg-gradient-to-r from-[#064e3b] to-[#047857] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:shadow-lg hover:shadow-emerald-900/20 transition-all"
+            className="inline-flex items-center bg-primary text-primary-foreground text-sm font-semibold px-6 py-3 rounded-lg hover:bg-primary/90 hover:shadow-md transition-all"
           >
             Jetzt starten →
           </Link>
